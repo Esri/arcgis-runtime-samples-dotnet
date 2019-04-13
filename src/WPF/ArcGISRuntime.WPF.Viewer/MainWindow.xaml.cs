@@ -85,6 +85,9 @@ namespace ArcGISRuntime.Samples.Desktop
         private async Task SelectSample(SampleInfo selectedSample)
         {
             if (selectedSample == null) return;
+#if TELEMETRY
+            WPF.Viewer.Telemetry.DiagnosticsClient.TrackPageView(selectedSample.SampleType.FullName);
+#endif
 
             SampleManager.Current.SelectedSample = selectedSample;
             DescriptionContainer.SetSample(selectedSample);
@@ -105,12 +108,18 @@ namespace ArcGISRuntime.Samples.Desktop
 
                 // Show the sample
                 SampleContainer.Content = SampleManager.Current.SampleToControl(selectedSample);
+#if TELEMETRY
+                WPF.Viewer.Telemetry.DiagnosticsClient.TrackEvent($"{selectedSample.SampleType.FullName} loaded");
+#endif
                 SourceCodeContainer.LoadSourceCode();
             }
             catch (Exception exception)
             {
                 // failed to create new instance of the sample
                 SampleContainer.Content = new WPF.Viewer.ErrorPage(exception);
+#if TELEMETRY
+                WPF.Viewer.Telemetry.DiagnosticsClient.Notify(exception, new Dictionary<string, string>() { { "Sample", selectedSample.SampleType.FullName } });
+#endif
             }
             CategoriesRegion.Visibility = Visibility.Collapsed;
             SampleContainer.Visibility = Visibility.Visible;

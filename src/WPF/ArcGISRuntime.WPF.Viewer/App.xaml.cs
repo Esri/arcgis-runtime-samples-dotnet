@@ -15,6 +15,13 @@ namespace ArcGISRuntime.WPF.Viewer
 {
     public partial class App
     {
+        public App()
+        {
+#if TELEMETRY
+            Telemetry.DiagnosticsClient.Initialize();
+#endif
+        }
+
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             try

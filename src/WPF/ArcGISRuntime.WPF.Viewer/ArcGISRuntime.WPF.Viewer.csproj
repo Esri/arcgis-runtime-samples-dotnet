@@ -20,6 +20,9 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(AppInsightsKey)'!=''">
+     <EnableAppTelemetry>true</EnableAppTelemetry>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
@@ -42,12 +45,16 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>7</LangVersion>
   </PropertyGroup>
+  <PropertyGroup  Condition="'$(EnableAppTelemetry)'=='true'">
+    <DefineConstants>$(DefineConstants);TELEMETRY</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Assets\ApplicationIcons\windows-desktop-256.ico</ApplicationIcon>
   </PropertyGroup>
   <!-- References -->
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.IO.Compression" />
@@ -1913,6 +1920,15 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+  </ItemGroup>
+  <ItemGroup Condition="'$(EnableAppTelemetry)'=='true'">
+    <Compile Include="Telemetry\*.cs" />
+    <Content Include="ApplicationInsights.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <PackageReference Include="AppInsights.WindowsDesktop">
+      <Version>2.10.37-preview</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Esri.ArcGISRuntime.Hydrography">
