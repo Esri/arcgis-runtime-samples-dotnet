@@ -14,15 +14,15 @@
         "server"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.LocalServices": "100.10.0",
         "Esri.ArcGISRuntime.WPF": "100.11.0"
     },
     "offline_data": [
-      "85c34847bbe1402fa115a1b9b87561ce"
+        "85c34847bbe1402fa115a1b9b87561ce"
     ],
     "redirect_from": [
-        "/net/latest/wpf/sample-code/localservermapimagelayer.htm"
+        "/net/latest/winui/sample-code/localservermapimagelayer.htm"
     ],
     "relevant_apis": [
         "ArcGISMapImageLayer",

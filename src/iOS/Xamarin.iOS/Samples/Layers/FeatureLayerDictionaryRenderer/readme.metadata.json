@@ -11,8 +11,8 @@
         "symbol"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
-        "Esri.ArcGISRuntime.Xamarin.iOS": "100.11.0"
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.Xamarin.iOS": "100.11.2"
     },
     "offline_data": [
         "e34835bf5ec5430da7cf16bb8c0b075c",

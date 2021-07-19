@@ -14,8 +14,8 @@
         "update"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
-        "Esri.ArcGISRuntime.WPF": "100.11.0"
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.WPF": "100.11.2"
     },
     "offline_data": [
         "740b663bff5e4198b9b6674af93f638a"

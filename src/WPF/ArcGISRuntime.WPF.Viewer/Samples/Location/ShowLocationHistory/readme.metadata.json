@@ -19,8 +19,8 @@
         "trail"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
-        "Esri.ArcGISRuntime.WPF": "100.11.0"
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.WPF": "100.11.2"
     },
     "offline_data": [],
     "redirect_from": [

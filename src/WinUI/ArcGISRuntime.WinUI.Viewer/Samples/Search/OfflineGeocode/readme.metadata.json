@@ -16,7 +16,7 @@
         "search"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
@@ -24,7 +24,7 @@
         "344e3b12368543ef84045ef9aa3c32ba"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/offlinegeocode.htm"
+        "/net/latest/winui/sample-code/offlinegeocode.htm"
     ],
     "relevant_apis": [
         "GeocodeParameters",

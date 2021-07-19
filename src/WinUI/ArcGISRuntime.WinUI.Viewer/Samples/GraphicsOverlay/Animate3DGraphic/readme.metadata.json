@@ -14,7 +14,7 @@
         "SceneView"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
@@ -25,7 +25,7 @@
         "12509ffdc684437f8f2656b0129d2c13"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/animate3dgraphic.htm"
+        "/net/latest/winui/sample-code/animate3dgraphic.htm"
     ],
     "relevant_apis": [
         "Camera",

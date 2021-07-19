@@ -15,8 +15,8 @@
         "voice"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
-        "Esri.ArcGISRuntime.Xamarin.iOS": "100.11.0"
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.Xamarin.iOS": "100.11.2"
     },
     "offline_data": [
         "91e7e6be79cc4d2f8416eff867674c1e",

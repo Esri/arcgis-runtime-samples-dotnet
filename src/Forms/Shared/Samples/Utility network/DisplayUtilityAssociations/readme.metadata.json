@@ -15,11 +15,11 @@
         "relationships"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
-        "Esri.ArcGISRuntime.UWP": "100.11.0",
-        "Esri.ArcGISRuntime.Xamarin.Android": "100.11.0",
-        "Esri.ArcGISRuntime.Xamarin.Forms": "100.11.0",
-        "Esri.ArcGISRuntime.Xamarin.iOS": "100.11.0"
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.UWP": "100.11.2",
+        "Esri.ArcGISRuntime.Xamarin.Android": "100.11.2",
+        "Esri.ArcGISRuntime.Xamarin.Forms": "100.11.2",
+        "Esri.ArcGISRuntime.Xamarin.iOS": "100.11.2"
     },
     "offline_data": [],
     "redirect_from": [

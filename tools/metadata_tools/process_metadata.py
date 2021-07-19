@@ -19,7 +19,9 @@ def get_platform_samples_root(platform, sample_root):
     if (platform == "Forms" or platform in ["XFA", "XFI", "XFU"]):
         return os.path.join(sample_root, "Forms", "Shared", "Samples")
     if (platform == "FormsAR"):
-        return os.path.join(sample_root, "Forms", "AugmentedReality")        
+        return os.path.join(sample_root, "Forms", "AugmentedReality")   
+    if (platform == "WinUI"):
+        return os.path.join(sample_root, "WinUI", "ArcGISRuntime.WinUI.Viewer", "Samples")     
     raise AssertionError(None, None)
 
 def get_relative_path_to_samples_from_platform_root(platform):
@@ -39,6 +41,8 @@ def get_relative_path_to_samples_from_platform_root(platform):
         return "Shared/Samples"
     if (platform == "FormsAR"):
         return "AugmentedReality"
+    if (platform == "WinUI"):
+        return "ArcGISRuntime.WinUI.Viewer/Samples"
     raise AssertionError(None, None)
 
 def plat_to_msbuild_string(platform):
@@ -210,7 +214,7 @@ def main():
             return
         common_dir_path = sys.argv[3]
 
-    for platform in ["UWP", "WPF", "Android", "Forms", "iOS", "FormsAR"]:
+    for platform in ["UWP", "WPF", "Android", "Forms", "iOS", "FormsAR", "WinUI"]:
         # make a list of samples, so that build_all_csproj.bat can be produced
         list_of_sample_dirs = []
         list_of_samples = {}

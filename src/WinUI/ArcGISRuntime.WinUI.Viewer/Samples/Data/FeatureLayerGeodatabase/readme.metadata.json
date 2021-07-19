@@ -12,7 +12,7 @@
         "offline"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
@@ -20,7 +20,7 @@
         "2b0f9e17105847809dfeb04e3cad69e0"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/featurelayergeodatabase.htm"
+        "/net/latest/winui/sample-code/featurelayergeodatabase.htm"
     ],
     "relevant_apis": [
         "FeatureLayer",

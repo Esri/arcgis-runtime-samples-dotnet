@@ -15,15 +15,15 @@
         "nautical chart"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
-        "Esri.ArcGISRuntime.Hydrography": "100.9.0",
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.Hydrography": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "9d2987a825c646468b3ce7512fb76e2d"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/addencexchangeset.htm"
+        "/net/latest/winui/sample-code/addencexchangeset.htm"
     ],
     "relevant_apis": [
         "EncCell",

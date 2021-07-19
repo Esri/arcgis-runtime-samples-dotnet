@@ -17,14 +17,14 @@
         "rendering"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "9465e8c02b294c69bdb42de056a23ab1"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/animateimageoverlay.htm"
+        "/net/latest/winui/sample-code/animateimageoverlay.htm"
     ],
     "relevant_apis": [
         "ImageFrame",

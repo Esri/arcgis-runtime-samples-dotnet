@@ -17,7 +17,7 @@
         "tabletop"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.ARToolkit": "100.11.0"
     },
     "offline_data": [

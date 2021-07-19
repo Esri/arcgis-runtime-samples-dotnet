@@ -19,14 +19,14 @@
         "raster"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "b5f977c78ec74b3a8857ca86d1d9b318"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/identifyrastercell.htm"
+        "/net/latest/winui/sample-code/identifyrastercell.htm"
     ],
     "relevant_apis": [
         "GeoView.IdentifyLayerAsync",

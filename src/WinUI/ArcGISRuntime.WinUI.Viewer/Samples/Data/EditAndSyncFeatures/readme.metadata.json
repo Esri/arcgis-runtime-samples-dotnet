@@ -13,14 +13,14 @@
         "synchronize"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "e4a398afe9a945f3b0f4dca1e4faccb5"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/editandsyncfeatures.htm"
+        "/net/latest/winui/sample-code/editandsyncfeatures.htm"
     ],
     "relevant_apis": [
         "FeatureLayer",

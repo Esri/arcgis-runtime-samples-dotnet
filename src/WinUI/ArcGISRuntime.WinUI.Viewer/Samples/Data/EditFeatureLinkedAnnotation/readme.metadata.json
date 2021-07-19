@@ -14,14 +14,14 @@
         "fields"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "74c0c9fa80f4498c9739cc42531e9948"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/editfeaturelinkedannotation.htm"
+        "/net/latest/winui/sample-code/editfeaturelinkedannotation.htm"
     ],
     "relevant_apis": [
         "AnnotationLayer",

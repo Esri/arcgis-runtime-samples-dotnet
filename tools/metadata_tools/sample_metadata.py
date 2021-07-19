@@ -17,8 +17,8 @@ class sample_metadata:
     Use emit_standalone_solution to write out the sample as a standalone Visual Studio solution.
     '''
     
-    arcgis_runtime_latest = "100.11.0" # store latest Runtime version, for use with packages
-    local_server_latest = "100.9.0"
+    arcgis_runtime_latest = "100.11.2" # store latest Runtime version, for use with packages
+    local_server_latest = "100.10.0"
     ar_toolkit_latest = "100.11.0"
 
     def reset_props(self):

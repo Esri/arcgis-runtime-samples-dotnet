@@ -16,8 +16,8 @@
         "visualization"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
-        "Esri.ArcGISRuntime.Xamarin.Android": "100.11.0"
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.Xamarin.Android": "100.11.2"
     },
     "offline_data": [
         "751138a2e0844e06853522d54103222a"

@@ -20,14 +20,14 @@
         "turn-by-turn"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "567e14f3420d40c5a206e5c0284cf8fc"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/offlinerouting.htm"
+        "/net/latest/winui/sample-code/offlinerouting.htm"
     ],
     "relevant_apis": [
         "RouteParameters",

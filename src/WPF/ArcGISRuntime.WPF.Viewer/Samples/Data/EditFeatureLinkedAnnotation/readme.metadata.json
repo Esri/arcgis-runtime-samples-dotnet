@@ -14,8 +14,8 @@
         "fields"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
-        "Esri.ArcGISRuntime.WPF": "100.11.0"
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.WPF": "100.11.2"
     },
     "offline_data": [
         "74c0c9fa80f4498c9739cc42531e9948"

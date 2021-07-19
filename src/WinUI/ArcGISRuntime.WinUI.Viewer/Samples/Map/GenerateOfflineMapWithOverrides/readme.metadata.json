@@ -20,12 +20,12 @@
         "setting"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/generateofflinemapwithoverrides.htm"
+        "/net/latest/winui/sample-code/generateofflinemapwithoverrides.htm"
     ],
     "relevant_apis": [
         "ExportTileCacheParameters",

@@ -5,7 +5,7 @@ import os
 import sys
 
 # Platforms
-Platforms = ["UWP", "WPF", "Forms", "Android", "iOS"]
+Platforms = ["UWP", "WPF", "Forms", "Android", "iOS", "WinUI"]
 
 def get_platform_root(platform, sample_root):
     '''
@@ -21,6 +21,8 @@ def get_platform_root(platform, sample_root):
         return os.path.join(sample_root, "Forms", "Shared")
     if (platform == "iOS"):
         return os.path.join(sample_root, "iOS", "Xamarin.iOS")
+    if (platform == "WinUI"):
+        return os.path.join(sample_root, "WinUI", "ArcGISRuntime.WinUI.Viewer")
     return ""
 
 def get_proj_file(platform, sample_root):
@@ -38,6 +40,8 @@ def get_proj_file(platform, sample_root):
         return os.path.join(basepath, "ArcGISRuntime.Xamarin.Samples.iOS.csproj")
     if (platform == "Forms"):
         return os.path.join(basepath, "Forms.projitems")
+    if (platform == "WinUI"):
+        return os.path.join(basepath, "ArcGISRuntime.WinUI.Viewer.csproj")
     return ""
 
 def get_csproj_style_path(category_list, sample_name, file_name):
@@ -113,6 +117,8 @@ def build_csproj_line(category_list, sample_name, platform, entry_type):
 
 def perform_csproj_replace(platforms, root, category_list, sample_name):
     for platform in platforms:
+        if platform is "WinUI":
+            continue
         path = get_proj_file(platform, root)
         new_contents = []
         with open(path, 'r+') as fd:

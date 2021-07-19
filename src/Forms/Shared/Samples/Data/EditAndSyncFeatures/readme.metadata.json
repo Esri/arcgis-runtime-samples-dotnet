@@ -13,11 +13,11 @@
         "synchronize"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
-        "Esri.ArcGISRuntime.UWP": "100.11.0",
-        "Esri.ArcGISRuntime.Xamarin.Android": "100.11.0",
-        "Esri.ArcGISRuntime.Xamarin.Forms": "100.11.0",
-        "Esri.ArcGISRuntime.Xamarin.iOS": "100.11.0"
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.UWP": "100.11.2",
+        "Esri.ArcGISRuntime.Xamarin.Android": "100.11.2",
+        "Esri.ArcGISRuntime.Xamarin.Forms": "100.11.2",
+        "Esri.ArcGISRuntime.Xamarin.iOS": "100.11.2"
     },
     "offline_data": [
         "e4a398afe9a945f3b0f4dca1e4faccb5"

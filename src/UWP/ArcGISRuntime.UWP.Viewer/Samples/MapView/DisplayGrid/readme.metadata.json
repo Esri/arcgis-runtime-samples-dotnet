@@ -20,8 +20,8 @@
         "seconds"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.11.0",
-        "Esri.ArcGISRuntime.UWP": "100.11.0"
+        "Esri.ArcGISRuntime": "100.11.2",
+        "Esri.ArcGISRuntime.UWP": "100.11.2"
     },
     "offline_data": [],
     "redirect_from": [

@@ -17,14 +17,14 @@
         "tour"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "f10b1d37fdd645c9bc9b189fb546307c"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/playkmltours.htm"
+        "/net/latest/winui/sample-code/playkmltours.htm"
     ],
     "relevant_apis": [
         "KmlTour",

@@ -14,14 +14,14 @@
         "visualization"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "d98b3e5293834c5f852f13c569930caa"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/symbolizeshapefile.htm"
+        "/net/latest/winui/sample-code/symbolizeshapefile.htm"
     ],
     "relevant_apis": [
         "FeatureLayer",

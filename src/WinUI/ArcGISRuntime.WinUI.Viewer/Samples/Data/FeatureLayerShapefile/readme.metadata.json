@@ -13,14 +13,14 @@
         "vector"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "d98b3e5293834c5f852f13c569930caa"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/featurelayershapefile.htm"
+        "/net/latest/winui/sample-code/featurelayershapefile.htm"
     ],
     "relevant_apis": [
         "FeatureLayer",

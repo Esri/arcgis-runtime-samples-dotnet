@@ -16,14 +16,14 @@
         "visibility analysis"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "07d62a792ab6496d9b772a24efea45d0"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/viewshedgeoelement.htm"
+        "/net/latest/winui/sample-code/viewshedgeoelement.htm"
     ],
     "relevant_apis": [
         "AnalysisOverlay",

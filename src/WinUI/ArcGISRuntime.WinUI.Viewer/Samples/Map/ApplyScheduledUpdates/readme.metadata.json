@@ -14,14 +14,14 @@
         "update"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "740b663bff5e4198b9b6674af93f638a"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/applyscheduledupdates.htm"
+        "/net/latest/winui/sample-code/applyscheduledupdates.htm"
     ],
     "relevant_apis": [
         "MobileMapPackage",

@@ -1,9 +1,3 @@
-## ArcGIS Runtime API for .NET - Samples : WinUI (Preview)
-
-ArcGIS Runtime sample viewer for WinUI is a preview intended for evaluation purposes only. Sample viewer project references preview APIs:
-- [ArcGIS Runtime SDK for .NET - WinUI Preview 2 `Esri.ArcGISRuntime.WinUI.100.10.0-preview2`](https://community.esri.com/t5/arcgis-runtime-sdks-blog/announcing-arcgis-runtime-sdk-for-net-100-10/ba-p/1019490#toc-hId-1734174535)
-- [Windows UI Library 3 Preview 4 `Microsoft.WinUI.3.0.0-preview4.210210.4`](https://docs.microsoft.com/en-us/windows/apps/winui/winui3/).
-
 # Table of contents
 
 ## Analysis
@@ -14,7 +8,7 @@ ArcGIS Runtime sample viewer for WinUI is a preview intended for evaluation purp
 * [Query feature count and extent](ArcGISRuntime.WinUI.Viewer/Samples/Analysis/QueryFeatureCountAndExtent/readme.md) - Zoom to features matching a query and count the features in the current visible extent.
 * [Viewshed for camera](ArcGISRuntime.WinUI.Viewer/Samples/Analysis/ViewshedCamera/readme.md) - Analyze the viewshed for a camera. A viewshed shows the visible and obstructed areas from an observer's vantage point. 
 * [Viewshed for GeoElement](ArcGISRuntime.WinUI.Viewer/Samples/Analysis/ViewshedGeoElement/readme.md) - Analyze the viewshed for an object (GeoElement) in a scene.
-* [Viewshed (location)](ArcGISRuntime.WinUI.Viewer/Samples/Analysis/ViewshedLocation/readme.md) - Perform a viewshed analysis from a defined vantage point. 
+* [Viewshed (location)](ArcGISRuntime.WinUI.Viewer/Samples/Analysis/ViewshedLocation/readme.md) - Perform a viewshed analysis from a defined vantage point.
 
 ## Data
 
@@ -136,7 +130,6 @@ ArcGIS Runtime sample viewer for WinUI is a preview intended for evaluation purp
 * [Scene layer selection](ArcGISRuntime.WinUI.Viewer/Samples/Layers/SceneLayerSelection/readme.md) - Identify features in a scene to select.
 * [Scene layer (URL)](ArcGISRuntime.WinUI.Viewer/Samples/Layers/SceneLayerUrl/readme.md) - Display an ArcGIS scene layer from a URL.
 * [Show labels on layers](ArcGISRuntime.WinUI.Viewer/Samples/Layers/ShowLabelsOnLayer/readme.md) - Display custom labels on a feature layer.
-* [Show popup](ArcGISRuntime.WinUI.Viewer/Samples/Layers/ShowPopup/readme.md) - Show predefined popups from a web map.
 * [Style WMS layers](ArcGISRuntime.WinUI.Viewer/Samples/Layers/StyleWmsLayer/readme.md) - Change the style of a Web Map Service (WMS) layer.
 * [Time-based query](ArcGISRuntime.WinUI.Viewer/Samples/Layers/TimeBasedQuery/readme.md) - Query data using a time extent. 
 * [Load WFS with XML query](ArcGISRuntime.WinUI.Viewer/Samples/Layers/WfsXmlQuery/readme.md) - Load a WFS feature table using an XML query.
@@ -145,9 +138,13 @@ ArcGIS Runtime sample viewer for WinUI is a preview intended for evaluation purp
 * [WMS service catalog](ArcGISRuntime.WinUI.Viewer/Samples/Layers/WmsServiceCatalog/readme.md) - Connect to a WMS service and show the available layers and sublayers. 
 * [WMTS layer](ArcGISRuntime.WinUI.Viewer/Samples/Layers/WMTSLayer/readme.md) - Display a layer from a Web Map Tile Service.
 
+## Local Server
+
+* [Local Server map image layer](ArcGISRuntime.WinUI.Viewer/Samples/Local%20Server/LocalServerMapImageLayer/readme.md) - Start the Local Server and Local Map Service, create an ArcGIS Map Image Layer from the Local Map Service, and add it to a map.
+
 ## Location
 
-* [Display device location](ArcGISRuntime.WinUI.Viewer/Samples/Location/DisplayDeviceLocation/readme.md) - Display your current position on the map, as well as switch between different types of auto pan Modes.
+* [Display device location with autopan modes](ArcGISRuntime.WinUI.Viewer/Samples/Location/DisplayDeviceLocation/readme.md) - Display your current position on the map, as well as switch between different types of auto pan Modes.
 * [Show location history](ArcGISRuntime.WinUI.Viewer/Samples/Location/ShowLocationHistory/readme.md) - Display your location history on the map.
 
 ## Map

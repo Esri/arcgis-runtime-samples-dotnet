@@ -17,14 +17,14 @@
         "table"
     ],
     "nuget_packages": {
-        "Esri.ArcGISRuntime": "100.10.0",
+        "Esri.ArcGISRuntime": "100.11.2",
         "Esri.ArcGISRuntime.WinUI": "100.10.0-preview1"
     },
     "offline_data": [
         "68ec42517cdd439e81b036210483e8e7"
     ],
     "redirect_from": [
-        "/net/latest/uwp/sample-code/readgeopackage.htm"
+        "/net/latest/winui/sample-code/readgeopackage.htm"
     ],
     "relevant_apis": [
         "GeoPackage",
