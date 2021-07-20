@@ -39,6 +39,7 @@
         "Surface"
     ],
     "snippets": [
+        "../../../Helpers/ArcGISLoginPrompt.cs",
         "AdjustableLocationDataSource.cs",
         "RoutePlanner.cs",
         "RouteViewerAR.cs"

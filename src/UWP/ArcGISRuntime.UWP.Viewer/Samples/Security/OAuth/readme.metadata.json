@@ -30,6 +30,7 @@
         "ServerInfo"
     ],
     "snippets": [
+        "../../../Helpers/ArcGISLoginPrompt.cs",
         "OAuth.xaml",
         "OAuth.xaml.cs"
     ],

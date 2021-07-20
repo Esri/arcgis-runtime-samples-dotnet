@@ -8,13 +8,10 @@
 // language governing permissions and limitations under the License.
 
 using ArcGISRuntime.Samples.Managers;
-using ArcGISRuntime.Samples.Shared.Managers;
 using ArcGISRuntime.Samples.Shared.Models;
-using Esri.ArcGISRuntime.Security;
-using System;
+using Forms.Helpers;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Xamarin.Forms;
 
 #if WINDOWS_UWP
@@ -54,78 +51,10 @@ namespace ArcGISRuntime
             BindingContext = _listSampleItems;
         }
 
-        private async void OnItemTapped(object sender, ItemTappedEventArgs e)
+        public void OnItemTapped(object sender, ItemTappedEventArgs e)
         {
-            // Call a function to clear existing credentials.
-            ClearCredentials();
-
-            try
-            {
-                // Get the selected sample.
-                SampleInfo item = (SampleInfo)e.Item;
-
-                if (item.FormalName == "AuthorMap")
-                {
-                    // Remove API key if opening Create and save map sample.
-                    ApiKeyManager.DisableKey();
-                }
-                else
-                {
-                    // Ensure API key is set in ArcGIS Runtime environment.
-                    ApiKeyManager.EnableKey();
-                }
-
-                // Load offline data before showing the sample.
-                if (item.OfflineDataItems != null)
-                {
-                    CancellationTokenSource cancellationSource = new CancellationTokenSource();
-
-                    // Show the wait page.
-                    await Navigation.PushModalAsync(new WaitPage(cancellationSource) { Title = item.SampleName }, false);
-
-#if WINDOWS_UWP
-                    // Workaround for bug with Xamarin Forms UWP.
-                    await Task.WhenAll(
-                        Task.Delay(100),
-                        DataManager.EnsureSampleDataPresent(item, cancellationSource.Token)
-                        );
-#else
-                    // Wait for the sample data download.
-                    await DataManager.EnsureSampleDataPresent(item, cancellationSource.Token);
-#endif
-
-                    // Remove the waiting page.
-                    await Navigation.PopModalAsync(false);
-                }
-
-                // Get the sample control from the selected sample.
-                ContentPage sampleControl = (ContentPage)SampleManager.Current.SampleToControl(item);
-
-                // Create the sample display page to show the sample and the metadata.
-                SamplePage page = new SamplePage(sampleControl, item);
-
-                // Show the sample.
-                await Navigation.PushAsync(page, true);
-            }
-            catch (OperationCanceledException)
-            {
-                // Remove the waiting page.
-                await Navigation.PopModalAsync(false);
-
-                await Application.Current.MainPage.DisplayAlert("", "Download cancelled", "OK");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Exception occurred on OnItemTapped. Exception = " + ex);
-            }
-        }
-
-        private static void ClearCredentials()
-        {
-            foreach (Credential cred in AuthenticationManager.Current.Credentials)
-            {
-                AuthenticationManager.Current.RemoveCredential(cred);
-            }
+            var sampleInfo = e.Item as SampleInfo;
+            _ = SampleLoader.LoadSample(sampleInfo, this);
         }
     }
 }

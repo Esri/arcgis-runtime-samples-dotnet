@@ -9,25 +9,17 @@
 
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.Portal;
-using Esri.ArcGISRuntime.Security;
+using Esri.ArcGISRuntime.UI;
+using Forms.Helpers;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Xamarin.Forms;
-using Esri.ArcGISRuntime.UI;
-using System.IO;
-
-#if __IOS__
-using Xamarin.Forms.Platform.iOS;
-using Xamarin.Auth;
-using UIKit;
-#endif
 
 #if __ANDROID__
-using Android.App;
 using Application = Xamarin.Forms.Application;
-using Xamarin.Auth;
 #endif
 
 namespace ArcGISRuntime.Samples.AuthorMap
@@ -38,26 +30,20 @@ namespace ArcGISRuntime.Samples.AuthorMap
         description: "Create and save a map as an ArcGIS `PortalItem` (i.e. web map).",
         instructions: "1. Select the basemap and layers you'd like to add to your map.",
         tags: new[] { "ArcGIS Online", "OAuth", "portal", "publish", "share", "web map" })]
-    [ArcGISRuntime.Samples.Shared.Attributes.ClassFile("SaveMapPage.xaml.cs")]
+    [ArcGISRuntime.Samples.Shared.Attributes.ClassFile("SaveMapPage.xaml.cs", "Helpers\\ArcGISLoginPrompt.cs")]
     [ArcGISRuntime.Samples.Shared.Attributes.XamlFiles("SaveMapPage.xaml")]
-    public partial class AuthorMap : ContentPage, IOAuthAuthorizeHandler
+    public partial class AuthorMap : ContentPage
     {
-        // OAuth-related values ...
-        // URL of the server to authenticate with (ArcGIS Online)
         private const string ArcGISOnlineUrl = "https://www.arcgis.com/sharing/rest";
 
-        // Client ID for the app registered with the server (Portal Maps)
-        public static string AppClientId = "6wMAmbUEX1rvsOb4";
-
-        // Redirect URL after a successful authorization (configured for the Portal Maps application)
-        private string _oAuthRedirectUrl = "forms-samples-app://auth";
-
-        // String array to store basemap constructor types
-        private string[] _basemapTypes = {
+        // String array to store names of the available basemaps
+        private readonly string[] _basemapNames =
+        {
+            "Light Gray",
             "Topographic",
             "Streets",
             "Imagery",
-            "Oceans"
+            "Ocean"
         };
 
         // Dictionary of operational layer names and URLs
@@ -72,25 +58,27 @@ namespace ArcGISRuntime.Samples.AuthorMap
         {
             InitializeComponent();
 
-            // call a function to initialize the app (display a map, etc.)
-            Initialize();
+            _ = Initialize();
         }
 
-        private void Initialize()
+        private async Task Initialize()
         {
-            // Call a function to create a new map with a light gray canvas basemap
-            CreateNewMap();
+            ArcGISLoginPrompt.SetChallengeHandler();
 
-            // Show the default OAuth settings in the entry controls
-            ClientIDEntry.Text = AppClientId;
-            RedirectUrlEntry.Text = _oAuthRedirectUrl;
+            bool loggedIn = await ArcGISLoginPrompt.EnsureAGOLCredentialAsync();
+
+            // Show a plain gray map in the map view.
+            if (loggedIn)
+            {
+                MyMapView.Map = new Map(BasemapStyle.ArcGISLightGray);
+            }
+            else MyMapView.Map = new Map();
 
             // Change the style of the layer list view for Android and UWP
             switch (Device.RuntimePlatform)
             {
                 case Device.Android:
                     LayersList.BackgroundColor = Color.Black;
-                    OAuthSettingsGrid.BackgroundColor = Color.Gray;
                     break;
 
                 case Device.UWP:
@@ -98,28 +86,6 @@ namespace ArcGISRuntime.Samples.AuthorMap
                     LayersList.Margin = new Thickness(50);
                     break;
             }
-        }
-
-        private void OAuthSettingsCancel(object sender, EventArgs e)
-        {
-            OAuthSettingsGrid.IsVisible = false;
-        }
-
-        private void SaveOAuthSettings(object sender, EventArgs e)
-        {
-            var appClientId = ClientIDEntry.Text.Trim();
-            var oAuthRedirectUrl = RedirectUrlEntry.Text.Trim();
-
-            if (!string.IsNullOrWhiteSpace(appClientId) && !string.IsNullOrWhiteSpace(oAuthRedirectUrl))
-            {
-                AppClientId = appClientId;
-                _oAuthRedirectUrl = oAuthRedirectUrl;
-            }
-
-            OAuthSettingsGrid.IsVisible = false;
-
-            // Call a function to set up the AuthenticationManager
-            UpdateAuthenticationManager();
         }
 
         private void LayerSelected(object sender, ItemTappedEventArgs e)
@@ -142,7 +108,7 @@ namespace ArcGISRuntime.Samples.AuthorMap
             else
             {
                 // Add the chosen basemap (replace the current one)
-                AddBasemap(selectedItem);
+                ApplyBasemap(selectedItem);
             }
 
             // Hide the layer list
@@ -156,7 +122,7 @@ namespace ArcGISRuntime.Samples.AuthorMap
             if (button.Text == "Basemap")
             {
                 // Show the basemap list
-                LayersList.ItemsSource = _basemapTypes.ToList();
+                LayersList.ItemsSource = _basemapNames.ToList();
             }
             else if (button.Text == "Layers")
             {
@@ -195,12 +161,15 @@ namespace ArcGISRuntime.Samples.AuthorMap
 
             try
             {
+                // Make sure the user is logged in to ArcGIS Online
+                bool loggedIn = await ArcGISLoginPrompt.EnsureAGOLCredentialAsync();
+                if (!loggedIn) return;
+
+                // Load the current map before saving to portal.
+                await myMap.LoadAsync();
+
                 // Show the progress bar so the user knows work is happening
                 SaveMapProgressBar.IsVisible = true;
-
-                // Make sure the user is logged in to ArcGIS Online
-                Credential cred = await EnsureLoggedInAsync();
-                AuthenticationManager.Current.AddCredential(cred);
 
                 // Get information entered by the user for the new portal item properties
                 string title = e.MapTitle;
@@ -253,74 +222,35 @@ namespace ArcGISRuntime.Samples.AuthorMap
             }
         }
 
-        private async Task<Credential> EnsureLoggedInAsync()
-        {
-            // Challenge the user for portal credentials (OAuth credential request for arcgis.com)
-            Credential cred = null;
-            CredentialRequestInfo loginInfo = new CredentialRequestInfo
-            {
-                // Use the OAuth implicit grant flow
-                GenerateTokenOptions = new GenerateTokenOptions
-                {
-                    TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit
-                },
-
-                // Indicate the url (portal) to authenticate with (ArcGIS Online)
-                ServiceUri = new Uri(ArcGISOnlineUrl)
-            };
-
-            try
-            {
-                // Get the users credentials for ArcGIS Online (should have logged in when launching the page)
-                cred = await AuthenticationManager.Current.GetCredentialAsync(loginInfo, false);
-            }
-            catch (OperationCanceledException)
-            {
-                // user canceled the login
-                throw new Exception("Portal log in was canceled.");
-            }
-
-            return cred;
-        }
-
         private void NewMapButtonClick(object sender, EventArgs e)
         {
-            // Call a function to create a new map
-            CreateNewMap();
+            // Create a new map (will not have an associated PortalItem)
+            MyMapView.Map = new Map(BasemapStyle.ArcGISLightGray);
         }
 
-        private void CreateNewMap()
+        private void ApplyBasemap(string basemapName)
         {
-            // Create new Map with a light gray canvas basemap
-            Map myMap = new Map(Basemap.CreateLightGrayCanvas());
-
-            // Add the Map to the MapView
-            MyMapView.Map = myMap;
-        }
-
-        private void AddBasemap(string basemapName)
-        {
-            // Apply the chosen basemap
+            // Set the basemap for the map according to the user's choice in the list box.
             switch (basemapName)
             {
+                case "Light Gray":
+                    MyMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISLightGray);
+                    break;
+
                 case "Topographic":
-                    // Set the basemap to Topographic
-                    MyMapView.Map.Basemap = Basemap.CreateTopographic();
+                    MyMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISTopographic);
                     break;
 
                 case "Streets":
-                    // Set the basemap to Streets
-                    MyMapView.Map.Basemap = Basemap.CreateStreets();
+                    MyMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISStreets);
                     break;
 
                 case "Imagery":
-                    // Set the basemap to Imagery
-                    MyMapView.Map.Basemap = Basemap.CreateImagery();
+                    MyMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISImagery);
                     break;
 
-                case "Oceans":
-                    // Set the basemap to Oceans
-                    MyMapView.Map.Basemap = Basemap.CreateOceans();
+                case "Ocean":
+                    MyMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISOceans);
                     break;
             }
         }
@@ -344,182 +274,5 @@ namespace ArcGISRuntime.Samples.AuthorMap
                 MyMapView.Map.OperationalLayers.Add(layer);
             }
         }
-
-        #region OAuth
-
-        private void UpdateAuthenticationManager()
-        {
-            // Define the server information for ArcGIS Online
-            ServerInfo portalServerInfo = new ServerInfo(new Uri(ArcGISOnlineUrl))
-            {
-                OAuthClientInfo = new OAuthClientInfo(AppClientId, new Uri(_oAuthRedirectUrl)),
-
-                // Specify OAuthAuthorizationCode if you need a refresh token (and have specified a valid client secret)
-                // Otherwise, use OAuthImplicit
-                TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit
-            };
-
-            // Get a reference to the (singleton) AuthenticationManager for the app
-            AuthenticationManager thisAuthenticationManager = AuthenticationManager.Current;
-
-            // Register the ArcGIS Online server information with the AuthenticationManager
-            thisAuthenticationManager.RegisterServer(portalServerInfo);
-
-            // Create a new ChallengeHandler that uses a method in this class to challenge for credentials
-            thisAuthenticationManager.ChallengeHandler = new ChallengeHandler(CreateCredentialAsync);
-
-            // Set the OAuthAuthorizeHandler component (this class) for Android or iOS platforms
-#if __ANDROID__ || __IOS__
-            thisAuthenticationManager.OAuthAuthorizeHandler = this;
-#endif
-        }
-
-        // ChallengeHandler function that will be called whenever access to a secured resource is attempted
-        public async Task<Credential> CreateCredentialAsync(CredentialRequestInfo info)
-        {
-            Credential credential = null;
-
-            try
-            {
-                // IOAuthAuthorizeHandler will challenge the user for OAuth credentials
-                credential = await AuthenticationManager.Current.GenerateCredentialAsync(info.ServiceUri);
-            }
-            catch (TaskCanceledException) { return credential; }
-            catch (Exception)
-            {
-                // Exception will be reported in calling function
-                throw;
-            }
-
-            return credential;
-        }
-
-        #region IOAuthAuthorizationHandler implementation
-
-        // Use a TaskCompletionSource to track the completion of the authorization
-        private TaskCompletionSource<IDictionary<string, string>> _taskCompletionSource;
-
-        // IOAuthAuthorizeHandler.AuthorizeAsync implementation
-        public Task<IDictionary<string, string>> AuthorizeAsync(Uri serviceUri, Uri authorizeUri, Uri callbackUri)
-        {
-            // If the TaskCompletionSource is not null, authorization may already be in progress and should be cancelled
-            if (_taskCompletionSource != null)
-            {
-                // Try to cancel any existing authentication task
-                _taskCompletionSource.TrySetCanceled();
-            }
-
-            // Create a task completion source
-            _taskCompletionSource = new TaskCompletionSource<IDictionary<string, string>>();
-#if __ANDROID__ || __IOS__
-
-#if __ANDROID__
-            // Get the current Android Activity
-            Activity activity = (Activity)ArcGISRuntime.Droid.MainActivity.Instance;
-#endif
-            // Create a new Xamarin.Auth.OAuth2Authenticator using the information passed in
-            Xamarin.Auth.OAuth2Authenticator authenticator = new Xamarin.Auth.OAuth2Authenticator(
-                clientId: AppClientId,
-                scope: "",
-                authorizeUrl: authorizeUri,
-                redirectUrl: callbackUri)
-            {
-                ShowErrors = false
-            };
-
-            // Allow the user to cancel the OAuth attempt
-            authenticator.AllowCancel = true;
-
-            // Define a handler for the OAuth2Authenticator.Completed event
-            authenticator.Completed += (sender, authArgs) =>
-            {
-                try
-                {
-#if __IOS__
-                    // Dismiss the OAuth UI when complete
-                    Device.BeginInvokeOnMainThread(() =>
-                    {
-                        var viewController = UIApplication.SharedApplication.KeyWindow.RootViewController;
-                        viewController.DismissViewController(true, null);
-                    });
-#endif
-
-                    // Check if the user is authenticated
-                    if (authArgs.IsAuthenticated)
-                    {
-                        // If authorization was successful, get the user's account
-                        Xamarin.Auth.Account authenticatedAccount = authArgs.Account;
-
-                        // Set the result (Credential) for the TaskCompletionSource
-                        _taskCompletionSource.SetResult(authenticatedAccount.Properties);
-                    }
-                    else
-                    {
-                        throw new Exception("Unable to authenticate user.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // If authentication failed, set the exception on the TaskCompletionSource
-                    _taskCompletionSource.TrySetException(ex);
-
-                    // Cancel authentication
-                    authenticator.OnCancelled();
-                }
-#if __ANDROID__
-                finally
-                {
-                    // Dismiss the OAuth login
-                    activity.FinishActivity(99);
-                }
-#endif
-            };
-
-            // If an error was encountered when authenticating, set the exception on the TaskCompletionSource
-            authenticator.Error += (sndr, errArgs) =>
-            {
-                // If the user cancels, the Error event is raised but there is no exception ... best to check first
-                if (errArgs.Exception != null)
-                {
-                    _taskCompletionSource.TrySetException(errArgs.Exception);
-                }
-                else
-                {
-                    // Login canceled: dismiss the OAuth login
-                    if (_taskCompletionSource != null)
-                    {
-                        _taskCompletionSource.TrySetCanceled();
-#if __ANDROID__
-                        activity.FinishActivity(99);
-#endif
-                    }
-                }
-
-                // Cancel authentication
-                authenticator.OnCancelled();
-            };
-
-            // Present the OAuth UI so the user can enter user name and password
-#if __ANDROID__
-            var intent = authenticator.GetUI(activity);
-            activity.StartActivityForResult(intent, 99);
-#endif
-#if __IOS__
-            // Present the OAuth UI (on the app's UI thread) so the user can enter user name and password
-            Device.BeginInvokeOnMainThread(() =>
-            {
-                var viewController = UIApplication.SharedApplication.KeyWindow.RootViewController;
-                viewController.PresentViewController(authenticator.GetUI(), true, null);
-            });
-#endif
-
-#endif
-            // Return completion source task so the caller can await completion
-            return _taskCompletionSource.Task;
-        }
-
-        #endregion IOAuthAuthorizationHandler implementation
-
-        #endregion OAuth
     }
 }

@@ -40,6 +40,7 @@
     ],
     "snippets": [
         "../../../Controls/JoystickSeekBar.cs",
+        "../../../Helpers/ArcGISLoginPrompt.cs",
         "../../../Resources/layout/NavigateARNavigator.axml",
         "../../../Resources/layout/NavigateARRoutePlanner.axml",
         "../../../Resources/values/Attrs.xml",

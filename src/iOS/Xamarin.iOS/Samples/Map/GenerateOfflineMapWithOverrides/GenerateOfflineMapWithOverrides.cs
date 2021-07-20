@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Esri.
+﻿// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
@@ -13,7 +13,6 @@ using Esri.ArcGISRuntime.Data;
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.Portal;
-using Esri.ArcGISRuntime.Security;
 using Esri.ArcGISRuntime.Symbology;
 using Esri.ArcGISRuntime.Tasks;
 using Esri.ArcGISRuntime.Tasks.Offline;
@@ -38,7 +37,7 @@ namespace ArcGISRuntimeXamarin.Samples.GenerateOfflineMapWithOverrides
         description: "Take a web map offline with additional options for each layer.",
         instructions: "Modify the overrides parameters:",
         tags: new[] { "LOD", "adjust", "download", "extent", "filter", "offline", "override", "parameters", "reduce", "scale range", "setting" })]
-    public class GenerateOfflineMapWithOverrides : UIViewController, IOAuthAuthorizeHandler
+    public class GenerateOfflineMapWithOverrides : UIViewController
     {
         // Hold references to UI controls.
         private MapView _myMapView;
@@ -74,9 +73,6 @@ namespace ArcGISRuntimeXamarin.Samples.GenerateOfflineMapWithOverrides
             {
                 // Start the loading indicator.
                 _loadingIndicator.StartAnimating();
-
-                // Call a function to set up the AuthenticationManager for OAuth.
-                SetOAuthInfo();
 
                 // Create the ArcGIS Online portal.
                 ArcGISPortal portal = await ArcGISPortal.CreateAsync();
@@ -149,15 +145,6 @@ namespace ArcGISRuntimeXamarin.Samples.GenerateOfflineMapWithOverrides
 
         private async void TakeMapOfflineButton_Click(object sender, EventArgs e)
         {
-            // Make sure the user is logged in.
-            /*
-            bool loggedIn = await EnsureLoggedInAsync();
-            if (!loggedIn)
-            {
-                return;
-            }
-            */
-
             // Disable the button to prevent errors.
             _takeMapOfflineButton.Enabled = false;
 
@@ -390,154 +377,6 @@ namespace ArcGISRuntimeXamarin.Samples.GenerateOfflineMapWithOverrides
             if (_overridesVC != null) _overridesVC.FinishedConfiguring -= ConfigurationContinuation;
             _takeMapOfflineButton.Clicked -= TakeMapOfflineButton_Click;
         }
-
-        #region Authentication
-
-        // Constants for OAuth-related values.
-        // - The URL of the portal to authenticate with (ArcGIS Online).
-        private const string ServerUrl = "https://www.arcgis.com/sharing/rest";
-
-        // - The Client ID for an app registered with the server (the ID below is for a public app created by the ArcGIS Runtime team).
-        private const string AppClientId = @"2Gh53JRzkPtOENQq";
-
-        // - A URL for redirecting after a successful authorization (this must be a URL configured with the app).
-        private const string OAuthRedirectUrl = @"https://developers.arcgis.com";
-
-        private void SetOAuthInfo()
-        {
-            // Register the server information with the AuthenticationManager.
-            ServerInfo serverInfo = new ServerInfo
-            {
-                ServerUri = new Uri(ServerUrl),
-                TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit,
-                OAuthClientInfo = new OAuthClientInfo
-                {
-                    ClientId = AppClientId,
-                    RedirectUri = new Uri(OAuthRedirectUrl)
-                }
-            };
-
-            // Register this server with AuthenticationManager.
-            AuthenticationManager.Current.RegisterServer(serverInfo);
-
-            // Use a function in this class to challenge for credentials.
-            AuthenticationManager.Current.ChallengeHandler = new ChallengeHandler(CreateCredentialAsync);
-
-            // Set the OAuthAuthorizeHandler component (this class) for Android or iOS platforms.
-            AuthenticationManager.Current.OAuthAuthorizeHandler = this;
-        }
-
-        // ChallengeHandler function that will be called whenever access to a secured resource is attempted.
-        private async Task<Credential> CreateCredentialAsync(CredentialRequestInfo info)
-        {
-            Credential credential = null;
-
-            try
-            {
-                // IOAuthAuthorizeHandler will challenge the user for OAuth credentials.
-                credential = await AuthenticationManager.Current.GenerateCredentialAsync(info.ServiceUri);
-            }
-            catch (TaskCanceledException)
-            {
-                return credential;
-            }
-            catch (Exception)
-            {
-                // Exception will be reported in calling function.
-                throw;
-            }
-
-            return credential;
-        }
-
-        #region IOAuthAuthorizationHandler implementation
-
-        // Use a TaskCompletionSource to track the completion of the authorization.
-        private TaskCompletionSource<IDictionary<string, string>> _taskCompletionSource;
-
-        // IOAuthAuthorizeHandler.AuthorizeAsync implementation.
-        public Task<IDictionary<string, string>> AuthorizeAsync(Uri serviceUri, Uri authorizeUri, Uri callbackUri)
-        {
-            // If the TaskCompletionSource is not null, authorization may already be in progress and should be canceled.
-            // Try to cancel any existing authentication process.
-            _taskCompletionSource?.TrySetCanceled();
-
-            // Create a task completion source.
-            _taskCompletionSource = new TaskCompletionSource<IDictionary<string, string>>();
-
-            // Create a new Xamarin.Auth.OAuth2Authenticator using the information passed in.
-            _auth = new OAuth2Authenticator(
-                clientId: AppClientId,
-                scope: "",
-                authorizeUrl: authorizeUri,
-                redirectUrl: new Uri(OAuthRedirectUrl))
-            {
-                ShowErrors = false,
-                // Allow the user to cancel the OAuth attempt.
-                AllowCancel = true
-            };
-
-            // Define a handler for the OAuth2Authenticator.Completed event.
-            _auth.Completed += (o, authArgs) =>
-            {
-                try
-                {
-                    // Dismiss the OAuth UI when complete.
-                    InvokeOnMainThread(() => { UIApplication.SharedApplication.KeyWindow.RootViewController.DismissViewController(true, null); });
-
-                    // Check if the user is authenticated.
-                    if (authArgs.IsAuthenticated)
-                    {
-                        // If authorization was successful, get the user's account.
-                        Xamarin.Auth.Account authenticatedAccount = authArgs.Account;
-
-                        // Set the result (Credential) for the TaskCompletionSource.
-                        _taskCompletionSource.SetResult(authenticatedAccount.Properties);
-                    }
-                    else
-                    {
-                        throw new Exception("Unable to authenticate user.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // If authentication failed, set the exception on the TaskCompletionSource.
-                    _taskCompletionSource.TrySetException(ex);
-
-                    // Cancel authentication.
-                    _auth.OnCancelled();
-                }
-            };
-
-            // If an error was encountered when authenticating, set the exception on the TaskCompletionSource.
-            _auth.Error += (o, errArgs) =>
-            {
-                // If the user cancels, the Error event is raised but there is no exception ... best to check first.
-                if (errArgs.Exception != null)
-                {
-                    _taskCompletionSource.TrySetException(errArgs.Exception);
-                }
-                else
-                {
-                    // Login canceled: dismiss the OAuth login.
-                    _taskCompletionSource?.TrySetCanceled();
-                }
-
-                // Cancel authentication.
-                _auth.OnCancelled();
-                _auth = null;
-            };
-
-            // Present the OAuth UI (on the app's UI thread) so the user can enter user name and password.
-            InvokeOnMainThread(() => { UIApplication.SharedApplication.KeyWindow.RootViewController.PresentViewController(_auth.GetUI(), true, null); });
-
-            // Return completion source task so the caller can await completion.
-            return _taskCompletionSource.Task;
-        }
-
-        #endregion IOAuthAuthorizationHandler implementation
-
-        #endregion Authentication
 
         // Force popover to display on iPhone.
         private class ppDelegate : UIPopoverPresentationControllerDelegate

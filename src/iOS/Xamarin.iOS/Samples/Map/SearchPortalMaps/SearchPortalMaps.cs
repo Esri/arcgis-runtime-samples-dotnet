@@ -1,4 +1,4 @@
-// Copyright 2017 Esri.
+// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
@@ -7,10 +7,11 @@
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
 // language governing permissions and limitations under the License.
 
+using ArcGISRuntime.Helpers;
+using ArcGISRuntime.Samples.Shared.Managers;
 using Esri.ArcGISRuntime;
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.Portal;
-using Esri.ArcGISRuntime.Security;
 using Esri.ArcGISRuntime.UI.Controls;
 using Foundation;
 using System;
@@ -18,7 +19,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UIKit;
-using Xamarin.Auth;
 
 namespace ArcGISRuntime.Samples.SearchPortalMaps
 {
@@ -29,7 +29,8 @@ namespace ArcGISRuntime.Samples.SearchPortalMaps
         description: "Find webmap portal items by using a search term.",
         instructions: "Enter search terms into the search bar. Once the search is complete, a list is populated with the resultant webmaps. Tap on a webmap to set it to the map view. Scrolling to the bottom of the webmap recycler view will get more results.",
         tags: new[] { "keyword", "query", "search", "webmap" })]
-    public class SearchPortalMaps : UIViewController, IOAuthAuthorizeHandler
+    [ArcGISRuntime.Samples.Shared.Attributes.ClassFile("Helpers/ArcGISLoginPrompt.cs")]
+    public class SearchPortalMaps : UIViewController
     {
         // Hold references to UI controls.
         private MapView _myMapView;
@@ -37,35 +38,26 @@ namespace ArcGISRuntime.Samples.SearchPortalMaps
         private UIBarButtonItem _myMapsButton;
         private bool _myMapsLastClicked;
 
-        // Use a TaskCompletionSource to track the completion of the authorization.
-        private TaskCompletionSource<IDictionary<string, string>> _taskCompletionSource;
-
         // Variables for OAuth configuration and default values.
         // URL of the server to authenticate with.
         private const string ServerUrl = "https://www.arcgis.com/sharing/rest";
-
-        // TODO: Add Client ID for an app registered with the server.
-        private const string AppClientId = "2Gh53JRzkPtOENQq";
-
-        // TODO: Add URL for redirecting after a successful authorization.
-        //       Note - this must be a URL configured as a valid Redirect URI with your app.
-        private const string OAuthRedirectUrl = "https://developers.arcgis.com";
-
-        // Hold a reference to the authenticator.
-        private Xamarin.Auth.OAuth2Authenticator _auth;
 
         public SearchPortalMaps()
         {
             Title = "Search a portal for maps";
         }
 
-        private void Initialize()
+        private async Task Initialize()
         {
-            // Show a map with basemap by default.
-            _myMapView.Map = new Map(BasemapStyle.ArcGISLightGray);
+            // Remove the API key.
+            ApiKeyManager.DisableKey();
 
-            // Update the authentication settings.
-            UpdateAuthenticationManager();
+            ArcGISLoginPrompt.SetChallengeHandler(this);
+
+            bool loggedIn = await ArcGISLoginPrompt.EnsureAGOLCredentialAsync();
+
+            // Display a default map
+            if (loggedIn) _myMapView.Map = new Map(BasemapStyle.ArcGISLightGray);
         }
 
         private async void GetMyMaps_Clicked(object sender, EventArgs e)
@@ -106,11 +98,8 @@ namespace ArcGISRuntime.Samples.SearchPortalMaps
         private async Task GetMyMaps()
         {
             // Call a sub that will force the user to log in to ArcGIS Online (if they haven't already).
-            bool loggedIn = await EnsureLoggedInAsync();
-            if (!loggedIn)
-            {
-                return;
-            }
+            bool loggedIn = await ArcGISLoginPrompt.EnsureAGOLCredentialAsync();
+            if (!loggedIn) { return; }
 
             // Connect to the portal (will connect using the provided credentials).
             ArcGISPortal portal = await ArcGISPortal.CreateAsync(new Uri(ServerUrl));
@@ -204,7 +193,7 @@ namespace ArcGISRuntime.Samples.SearchPortalMaps
             {
                 await webMap.LoadAsync();
             }
-            catch (Esri.ArcGISRuntime.ArcGISRuntimeException e)
+            catch (ArcGISRuntimeException e)
             {
                 UIAlertView alert =
                     new UIAlertView("Map Load Error", e.Message, (IUIAlertViewDelegate)null, "OK", null);
@@ -246,7 +235,7 @@ namespace ArcGISRuntime.Samples.SearchPortalMaps
         public override void ViewDidLoad()
         {
             base.ViewDidLoad();
-            Initialize();
+            _ = Initialize();
         }
 
         public override void LoadView()
@@ -304,183 +293,9 @@ namespace ArcGISRuntime.Samples.SearchPortalMaps
             // Unsubscribe from events, per best practice.
             _searchButton.Clicked -= SearchMaps_Clicked;
             _myMapsButton.Clicked -= GetMyMaps_Clicked;
+
+            // Restore API key if leaving sample.
+            ApiKeyManager.EnableKey();
         }
-
-        #region OAuth helpers
-
-        private void UpdateAuthenticationManager()
-        {
-            // Register the server information with the AuthenticationManager.
-            ServerInfo portalServerInfo = new ServerInfo(new Uri(ServerUrl))
-            {
-                TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit,
-                OAuthClientInfo = new OAuthClientInfo(AppClientId, new Uri(OAuthRedirectUrl))
-            };
-
-            // Get a reference to the (singleton) AuthenticationManager for the app.
-            AuthenticationManager thisAuthenticationManager = AuthenticationManager.Current;
-
-            // Register the server information.
-            thisAuthenticationManager.RegisterServer(portalServerInfo);
-
-            // Assign the method that AuthenticationManager will call to challenge for secured resources.
-            thisAuthenticationManager.ChallengeHandler = new ChallengeHandler(CreateCredentialAsync);
-
-            // Set the OAuth authorization handler to this class (Implements IOAuthAuthorize interface).
-            thisAuthenticationManager.OAuthAuthorizeHandler = this;
-        }
-
-        private async Task<bool> EnsureLoggedInAsync()
-        {
-            bool loggedIn = false;
-
-            try
-            {
-                // Create a challenge request for portal credentials (OAuth credential request for arcgis.com).
-                CredentialRequestInfo challengeRequest = new CredentialRequestInfo
-                {
-                    // Use the OAuth implicit grant flow.
-                    GenerateTokenOptions = new GenerateTokenOptions
-                    {
-                        TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit
-                    },
-
-                    // Indicate the URL (portal) to authenticate with (ArcGIS Online).
-                    ServiceUri = new Uri(ServerUrl)
-                };
-
-                // Call GetCredentialAsync on the AuthenticationManager to invoke the challenge handler.
-                Credential cred = await AuthenticationManager.Current.GetCredentialAsync(challengeRequest, false);
-                loggedIn = cred != null;
-            }
-            catch (OperationCanceledException)
-            {
-                // Login was canceled.
-                // .. ignore, user can still search public maps without logging in.
-            }
-            catch (Exception ex)
-            {
-                // Login failure.
-                UIAlertView alert = new UIAlertView("Login Error", ex.Message, (IUIAlertViewDelegate)null, "OK", null);
-                alert.Show();
-            }
-
-            return loggedIn;
-        }
-
-        // ChallengeHandler function for AuthenticationManager, called whenever access to a secured resource is attempted.
-        private async Task<Credential> CreateCredentialAsync(CredentialRequestInfo info)
-        {
-            OAuthTokenCredential credential = null;
-
-            try
-            {
-                // Create generate token options if necessary.
-                if (info.GenerateTokenOptions == null)
-                {
-                    info.GenerateTokenOptions = new GenerateTokenOptions();
-                }
-
-                // AuthenticationManager will handle challenging the user for credentials.
-                credential = await AuthenticationManager.Current.GenerateCredentialAsync
-                (
-                    info.ServiceUri,
-                    info.GenerateTokenOptions
-                ) as OAuthTokenCredential;
-            }
-            catch (TaskCanceledException)
-            {
-                return credential;
-            }
-            catch (Exception)
-            {
-                // Exception will be reported in calling function.
-                throw;
-            }
-
-            return credential;
-        }
-
-        // IOAuthAuthorizeHandler.AuthorizeAsync implementation.
-        public Task<IDictionary<string, string>> AuthorizeAsync(Uri serviceUri, Uri authorizeUri, Uri callbackUri)
-        {
-            // If the TaskCompletionSource is not null, authorization may already be in progress and should be canceled.
-            // Try to cancel any existing authentication process.
-            _taskCompletionSource?.TrySetCanceled();
-
-            // Create a task completion source.
-            _taskCompletionSource = new TaskCompletionSource<IDictionary<string, string>>();
-
-            // Create a new Xamarin.Auth.OAuth2Authenticator using the information passed in.
-            _auth = new OAuth2Authenticator(
-                clientId: AppClientId,
-                scope: "",
-                authorizeUrl: authorizeUri,
-                redirectUrl: new Uri(OAuthRedirectUrl))
-            {
-                ShowErrors = false,
-                // Allow the user to cancel the OAuth attempt.
-                AllowCancel = true
-            };
-
-            // Define a handler for the OAuth2Authenticator.Completed event.
-            _auth.Completed += (o, authArgs) =>
-            {
-                try
-                {
-                    // Dismiss the OAuth UI when complete.
-                    InvokeOnMainThread(() => { UIApplication.SharedApplication.KeyWindow.RootViewController.DismissViewController(true, null); });
-
-                    // Check if the user is authenticated.
-                    if (authArgs.IsAuthenticated)
-                    {
-                        // If authorization was successful, get the user's account.
-                        Xamarin.Auth.Account authenticatedAccount = authArgs.Account;
-
-                        // Set the result (Credential) for the TaskCompletionSource.
-                        _taskCompletionSource.SetResult(authenticatedAccount.Properties);
-                    }
-                    else
-                    {
-                        throw new Exception("Unable to authenticate user.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // If authentication failed, set the exception on the TaskCompletionSource.
-                    _taskCompletionSource.TrySetException(ex);
-
-                    // Cancel authentication.
-                    _auth.OnCancelled();
-                }
-            };
-
-            // If an error was encountered when authenticating, set the exception on the TaskCompletionSource.
-            _auth.Error += (o, errArgs) =>
-            {
-                // If the user cancels, the Error event is raised but there is no exception ... best to check first.
-                if (errArgs.Exception != null)
-                {
-                    _taskCompletionSource.TrySetException(errArgs.Exception);
-                }
-                else
-                {
-                    // Login canceled: dismiss the OAuth login.
-                    _taskCompletionSource?.TrySetCanceled();
-                }
-
-                // Cancel authentication.
-                _auth.OnCancelled();
-                _auth = null;
-            };
-
-            // Present the OAuth UI (on the app's UI thread) so the user can enter user name and password.
-            InvokeOnMainThread(() => { UIApplication.SharedApplication.KeyWindow.RootViewController.PresentViewController(_auth.GetUI(), true, null); });
-
-            // Return completion source task so the caller can await completion.
-            return _taskCompletionSource.Task;
-        }
-
-        #endregion OAuth helpers
     }
 }

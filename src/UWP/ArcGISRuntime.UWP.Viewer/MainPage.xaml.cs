@@ -31,6 +31,11 @@ namespace ArcGISRuntime.UWP.Viewer
         private readonly SystemNavigationManager _currentView;
         private bool _waitFlag;
 
+        private List<string> _namedUserSamples = new List<string> {
+            "AuthorMap",
+            "SearchPortalMaps",
+            "OAuth" };
+
         public MainPage()
         {
             InitializeComponent();
@@ -62,7 +67,7 @@ namespace ArcGISRuntime.UWP.Viewer
             SamplesGridView.ItemsSource = CategoriesTree.RootNodes[0].Children.ToList().Select(x => (SampleInfo)x.Content).ToList();
         }
 
-        private async void FirstLoaded(object sender, RoutedEventArgs e)
+        private void FirstLoaded(object sender, RoutedEventArgs e)
         {
             this.Loaded -= FirstLoaded;
 
@@ -118,22 +123,19 @@ namespace ArcGISRuntime.UWP.Viewer
 
         private async Task SelectSample(SampleInfo selectedSample)
         {
-            // The following code removes the API key when using the Create and save map sample.
-            if (nameof(SampleManager.Current.SelectedSample) != nameof(selectedSample))
+            // Restore API key if leaving named user sample.
+            if (_namedUserSamples.Contains(SampleManager.Current?.SelectedSample?.FormalName))
             {
-                // Remove API key if opening Create and save map sample.
-                if (selectedSample.FormalName == "AuthorMap")
-                {
-                    ApiKeyManager.DisableKey();
-                }
-                // Restore API key if leaving Create and save map sample.
-                else if (SampleManager.Current?.SelectedSample?.FormalName == "AuthorMap")
-                {
-                    ApiKeyManager.EnableKey();
-                }
+                ApiKeyManager.EnableKey();
             }
 
-            // Call a function to clear existing credentials
+            // Remove API key if opening named user sample.
+            if (_namedUserSamples.Contains(selectedSample.FormalName))
+            {
+                ApiKeyManager.DisableKey();
+            }
+
+            // Call a function to clear any existing credentials from AuthenticationManager
             ClearCredentials();
 
             SampleManager.Current.SelectedSample = selectedSample;
@@ -179,6 +181,9 @@ namespace ArcGISRuntime.UWP.Viewer
                     AuthenticationManager.Current.RemoveCredential(cred);
                 }
             }
+
+            // Clear the challenge handler.
+            AuthenticationManager.Current.ChallengeHandler = null;
         }
 
         private async void OnSearchQuerySubmitted(AutoSuggestBox searchBox, AutoSuggestBoxTextChangedEventArgs searchBoxQueryChangedEventArgs)

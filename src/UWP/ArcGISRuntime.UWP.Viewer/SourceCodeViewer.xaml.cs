@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Esri.
+﻿// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
@@ -27,20 +27,32 @@ namespace ArcGISRuntime.UWP.Viewer
 
         public void LoadSourceCode()
         {
-            string folderPath = SampleManager.Current.SelectedSample.Path;
-
-            // Source code of the file.
-            string source;
-
             // Create a new list of TabViewItems.
             tabs = new List<TabViewItem>();
 
-            // Loop through all .cs and .xaml files.
-            foreach (string filepath in Directory.GetFiles(folderPath)
+            // Create a list of source files for the sample.
+            var sourcePaths = new List<string>();
+
+            foreach (string filepath in Directory.GetFiles(SampleManager.Current.SelectedSample.Path)
                 .Where(candidate => candidate.EndsWith(".cs") || candidate.EndsWith(".xaml")))
             {
+                sourcePaths.Add(filepath);
+            }
+
+            // Add additional class files from the sample.
+            if (SampleManager.Current.SelectedSample.ClassFiles != null)
+            {
+                foreach (string additionalPath in SampleManager.Current.SelectedSample.ClassFiles)
+                {
+                    sourcePaths.Add(additionalPath);
+                }
+            }
+
+            // Loop through all .cs and .xaml files.
+            foreach (string filepath in sourcePaths)
+            {
                 // Get the source text from the file.
-                source = File.ReadAllText(filepath);
+                string source = File.ReadAllText(filepath);
 
                 // Create a new tab.
                 TabViewItem newTab = new TabViewItem();
@@ -57,7 +69,7 @@ namespace ArcGISRuntime.UWP.Viewer
                 if (filepath.EndsWith(".cs")) { viewer.CodeLanguage = "csharp"; }
 
                 // Adjust tabs for dark mode.
-                if (App.Current.RequestedTheme == Windows.UI.Xaml.ApplicationTheme.Dark)
+                if (Windows.UI.Xaml.Application.Current.RequestedTheme == Windows.UI.Xaml.ApplicationTheme.Dark)
                 {
                     Tabs.RequestedTheme = Windows.UI.Xaml.ElementTheme.Dark;
                     newTab.RequestedTheme = Windows.UI.Xaml.ElementTheme.Dark;

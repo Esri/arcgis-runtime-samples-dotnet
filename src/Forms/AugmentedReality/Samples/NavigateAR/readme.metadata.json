@@ -37,6 +37,7 @@
         "Surface"
     ],
     "snippets": [
+        "../../../Helpers/ArcGISLoginPrompt.cs",
         "RoutePlanner.xaml",
         "RoutePlanner.xaml.cs",
         "RouteViewer.xaml",

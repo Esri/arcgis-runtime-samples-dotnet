@@ -37,6 +37,9 @@ namespace ArcGISRuntime
         {
             base.OnCreate(bundle);
 
+            // Initialize Xamarin.Essentials for Auth usage.
+            Xamarin.Essentials.Platform.Init(this, bundle);
+
             SetContentView(Resource.Layout.CategoriesList);
 
             try
@@ -198,6 +201,9 @@ namespace ArcGISRuntime
             {
                 AuthenticationManager.Current.RemoveCredential(cred);
             }
+
+            // Clear the challenge handler.
+            AuthenticationManager.Current.ChallengeHandler = null;
         }
     }
 }

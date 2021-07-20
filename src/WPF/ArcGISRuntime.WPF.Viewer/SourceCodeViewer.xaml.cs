@@ -1,4 +1,4 @@
-﻿// Copyright 2018 Esri.
+﻿// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
@@ -21,6 +21,7 @@ namespace ArcGISRuntime.WPF.Viewer
     public partial class SourceCode : INotifyPropertyChanged
     {
         private SourceCodeFile _selectedFile;
+
         // Holds source files (as strings of html).
         public ObservableCollection<SourceCodeFile> SourceFiles { get; } = new ObservableCollection<SourceCodeFile>();
 
@@ -57,6 +58,15 @@ namespace ArcGISRuntime.WPF.Viewer
                 .Where(candidate => candidate.EndsWith(".cs") || candidate.EndsWith(".xaml")))
             {
                 SourceFiles.Add(new SourceCodeFile(filepath));
+            }
+
+            // Add additional class files from the sample.
+            if (SampleManager.Current.SelectedSample.ClassFiles != null)
+            {
+                foreach (string additionalPath in SampleManager.Current.SelectedSample.ClassFiles)
+                {
+                    SourceFiles.Add(new SourceCodeFile(additionalPath));
+                }
             }
 
             SelectedSourceFile = SourceFiles[0];
@@ -151,7 +161,7 @@ namespace ArcGISRuntime.WPF.Viewer
         [AttachedPropertyBrowsableForType(typeof(WebBrowser))]
         public static string GetHtml(WebBrowser d)
         {
-            return (string) d.GetValue(HtmlProperty);
+            return (string)d.GetValue(HtmlProperty);
         }
 
         public static void SetHtml(WebBrowser d, string value)
@@ -159,7 +169,7 @@ namespace ArcGISRuntime.WPF.Viewer
             d.SetValue(HtmlProperty, value);
         }
 
-        static void OnHtmlChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnHtmlChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             WebBrowser wb = d as WebBrowser;
             if (wb != null && e.NewValue != null)

@@ -25,6 +25,11 @@ namespace ArcGISRuntime.Samples.Desktop
     {
         private bool _waitFlag;
 
+        private List<string> _namedUserSamples = new List<string> {
+            "AuthorMap",
+            "SearchPortalMaps",
+            "OAuth" };
+
         public MainWindow()
         {
             InitializeComponent();
@@ -120,28 +125,25 @@ namespace ArcGISRuntime.Samples.Desktop
         {
             if (selectedSample == null) return;
 
-            // The following code removes the API key when using the Create and save map sample.
-            if (nameof(SampleManager.Current.SelectedSample) != nameof(selectedSample))
+            // Restore API key if leaving named user sample.
+            if (_namedUserSamples.Contains(SampleManager.Current?.SelectedSample?.FormalName))
             {
-                // Remove API key if opening Create and save map sample.
-                if (selectedSample.FormalName == "AuthorMap")
-                {
-                    ApiKeyManager.DisableKey();
-                }
-                // Restore API key if leaving Create and save map sample.
-                else if (SampleManager.Current?.SelectedSample?.FormalName == "AuthorMap")
-                {
-                    ApiKeyManager.EnableKey();
-                }
+                ApiKeyManager.EnableKey();
             }
+
+            // Remove API key if opening named user sample.
+            if (_namedUserSamples.Contains(selectedSample.FormalName))
+            {
+                ApiKeyManager.DisableKey();
+            }
+
+            // Call a function to clear any existing credentials from AuthenticationManager
+            ClearCredentials();
 
             SampleTitleBlock.Text = selectedSample.SampleName;
             SampleManager.Current.SelectedSample = selectedSample;
             DescriptionContainer.SetSample(selectedSample);
             ShowSampleTab();
-
-            // Call a function to clear any existing credentials from AuthenticationManager
-            ClearCredentials();
 
             try
             {
@@ -186,6 +188,9 @@ namespace ArcGISRuntime.Samples.Desktop
                     AuthenticationManager.Current.RemoveCredential(cred);
                 }
             }
+
+            // Clear the challenge handler.
+            AuthenticationManager.Current.ChallengeHandler = null;
         }
 
         private void OpenCategoryLeaves()
@@ -266,7 +271,7 @@ namespace ArcGISRuntime.Samples.Desktop
             Categories.DataContext = WPF.Viewer.Helpers.ToTreeViewItem(results);
 
             // Open all if query isn't empty
-            if (!String.IsNullOrWhiteSpace(SearchFilterBox.SearchText))
+            if (!string.IsNullOrWhiteSpace(SearchFilterBox.SearchText))
             {
                 OpenCategoryLeaves();
             }

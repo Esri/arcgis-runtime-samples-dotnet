@@ -28,6 +28,9 @@ namespace ArcGISRuntime.Droid
 
             Instance = this;
 
+            // Initialize Xamarin.Essentials for Auth usage.
+            Xamarin.Essentials.Platform.Init(this, bundle);
+
             // Copy files from the asset folder onto the filesystem to support browsing of sample code and readmes.
             SyncAssets("Samples", System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData));
 

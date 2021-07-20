@@ -204,6 +204,8 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Sample Code -->
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\ArcGISLoginPrompt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\SampleLoader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Samples\Layers\DisplayOACollection\DisplayOACollection.xaml.cs">
       <DependentUpon>DisplayOACollection.xaml</DependentUpon>
       <SubType>Code</SubType>

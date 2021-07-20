@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Esri.
+﻿// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
@@ -8,20 +8,17 @@
 // language governing permissions and limitations under the License.
 
 using ArcGISRuntime;
+using ArcGISRuntime.Helpers;
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Mapping;
-using Esri.ArcGISRuntime.Security;
 using Esri.ArcGISRuntime.Symbology;
 using Esri.ArcGISRuntime.Tasks.NetworkAnalysis;
 using Esri.ArcGISRuntime.UI;
 using Esri.ArcGISRuntime.UI.Controls;
 using Foundation;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using UIKit;
-using Xamarin.Auth;
 
 namespace ArcGISRuntimeXamarin.Samples.NavigateAR
 {
@@ -32,8 +29,8 @@ namespace ArcGISRuntimeXamarin.Samples.NavigateAR
         description: "Use a route displayed in the real world to navigate.",
         instructions: "The sample opens with a map centered on the current location. Tap the map to add an origin and a destination; the route will be shown as a line. When ready, click 'Confirm' to start the AR navigation. Calibrate the heading before starting to navigate. When you start, route instructions will be displayed and spoken. As you proceed through the route, new directions will be provided until you arrive.",
         tags: new[] { "augmented reality", "directions", "full-scale", "guidance", "mixed reality", "navigate", "navigation", "real-scale", "route", "routing", "world-scale" })]
-    [ArcGISRuntime.Samples.Shared.Attributes.OfflineData()]
-    public class NavigateAR : UIViewController, IOAuthAuthorizeHandler
+    [ArcGISRuntime.Samples.Shared.Attributes.ClassFile("Helpers/ArcGISLoginPrompt.cs")]
+    public class NavigateAR : UIViewController
     {
         // Hold references to the UI controls.
         private MapView _mapView;
@@ -53,13 +50,6 @@ namespace ArcGISRuntimeXamarin.Samples.NavigateAR
         private Route _route;
         private RouteResult _routeResult;
         private RouteParameters _routeParameters;
-
-        // Auth.
-        private TaskCompletionSource<IDictionary<string, string>> _taskCompletionSource;
-        private const string ServerUrl = "https://www.arcgis.com/sharing/rest";
-        private const string AppClientId = @"IBkBd7YYFHOzPIIO";
-        private const string OAuthRedirectUrl = @"xamarin-ios-app://auth";
-        private Xamarin.Auth.OAuth2Authenticator _auth;
 
         public override void LoadView()
         {
@@ -127,7 +117,7 @@ namespace ArcGISRuntimeXamarin.Samples.NavigateAR
                 _mapView.LocationDisplay.IsEnabled = true;
 
                 // Enable authentication.
-                SetOAuthInfo();
+                ArcGISLoginPrompt.SetChallengeHandler(this);
 
                 // Create the route task.
                 _routeTask = await RouteTask.CreateAsync(new System.Uri("https://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World"));
@@ -228,127 +218,5 @@ namespace ArcGISRuntimeXamarin.Samples.NavigateAR
                 System.Diagnostics.Debug.WriteLine(ex);
             }
         }
-
-        #region OAuth helpers
-
-        private void SetOAuthInfo()
-        {
-            // Register the server information with the AuthenticationManager.
-            ServerInfo serverInfo = new ServerInfo
-            {
-                ServerUri = new Uri(ServerUrl),
-                TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit,
-                OAuthClientInfo = new OAuthClientInfo
-                {
-                    ClientId = AppClientId,
-                    RedirectUri = new Uri(OAuthRedirectUrl)
-                }
-            };
-
-            // Register this server with AuthenticationManager.
-            AuthenticationManager.Current.RegisterServer(serverInfo);
-
-            // Use a function in this class to challenge for credentials.
-            AuthenticationManager.Current.ChallengeHandler = new ChallengeHandler(CreateCredentialAsync);
-
-            // Set the OAuthAuthorizeHandler component (this class).
-            AuthenticationManager.Current.OAuthAuthorizeHandler = this;
-        }
-
-        // ChallengeHandler function that will be called whenever access to a secured resource is attempted.
-        private async Task<Credential> CreateCredentialAsync(CredentialRequestInfo info)
-        {
-            Credential credential = null;
-
-            try
-            {
-                // IOAuthAuthorizeHandler will challenge the user for OAuth credentials.
-                credential = await AuthenticationManager.Current.GenerateCredentialAsync(info.ServiceUri);
-            }
-            catch (TaskCanceledException)
-            {
-                return credential;
-            }
-            catch (Exception)
-            {
-                // Exception will be reported in calling function.
-                throw;
-            }
-
-            return credential;
-        }
-
-        // IOAuthAuthorizeHandler.AuthorizeAsync implementation.
-        public Task<IDictionary<string, string>> AuthorizeAsync(Uri serviceUri, Uri authorizeUri, Uri callbackUri)
-        {
-            // If the TaskCompletionSource is not null, authorization is in progress.
-            if (_taskCompletionSource != null)
-            {
-                // Allow only one authorization process at a time.
-                throw new Exception();
-            }
-
-            // Create a task completion source.
-            _taskCompletionSource = new TaskCompletionSource<IDictionary<string, string>>();
-
-            // Create a new Xamarin.Auth.OAuth2Authenticator using the information passed in.
-            _auth = new OAuth2Authenticator(
-                clientId: AppClientId,
-                scope: "",
-                authorizeUrl: authorizeUri,
-                redirectUrl: new Uri(OAuthRedirectUrl))
-            {
-                // Allow the user to cancel the OAuth attempt.
-                AllowCancel = true
-            };
-
-            // Define a handler for the OAuth2Authenticator.Completed event.
-            _auth.Completed += (object sender, AuthenticatorCompletedEventArgs args) =>
-            {
-                try
-                {
-                    // Dismiss the OAuth UI when complete.
-                    this.DismissViewController(true, null);
-
-                    // Throw an exception if the user could not be authenticated.
-                    if (!args.IsAuthenticated)
-                    {
-                        throw new Exception("Unable to authenticate user.");
-                    }
-
-                    // If authorization was successful, get the user's account.
-                    Xamarin.Auth.Account authenticatedAccount = args.Account;
-
-                    // Set the result (Credential) for the TaskCompletionSource.
-                    _taskCompletionSource.SetResult(authenticatedAccount.Properties);
-                }
-                catch (Exception ex)
-                {
-                    // If authentication failed, set the exception on the TaskCompletionSource.
-                    _taskCompletionSource.SetException(ex);
-                }
-            };
-
-            // If an error was encountered when authenticating, set the exception on the TaskCompletionSource.
-            _auth.Error += (object sender, AuthenticatorErrorEventArgs args) =>
-            {
-                if (args.Exception != null)
-                {
-                    _taskCompletionSource.TrySetException(args.Exception);
-                }
-                else
-                {
-                    _taskCompletionSource.TrySetException(new Exception(args.Message));
-                }
-            };
-
-            // Present the OAuth UI (on the app's UI thread) so the user can enter user name and password.
-            InvokeOnMainThread(() => { this.PresentViewController(_auth.GetUI(), true, null); });
-
-            // Return completion source task so the caller can await completion.
-            return _taskCompletionSource.Task;
-        }
-
-        #endregion
     }
 }

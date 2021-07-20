@@ -10,4 +10,9 @@
   <application android:label="ArcGIS Runtime SDK for .NET" android:icon="@drawable/Icon" android:usesCleartextTraffic="true">
     <meta-data android:name="com.google.ar.core" android:value="optional" />
   </application>
+  <queries>
+    <intent>
+      <action android:name="android.support.customtabs.action.CustomTabsService" />
+    </intent>
+  </queries>
 </manifest>

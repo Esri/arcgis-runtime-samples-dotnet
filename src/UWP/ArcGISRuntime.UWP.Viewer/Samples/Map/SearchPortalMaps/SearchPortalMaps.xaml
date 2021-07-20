@@ -1,101 +1,75 @@
-﻿<UserControl
-    x:Class="ArcGISRuntime.UWP.Samples.SearchPortalMaps.SearchPortalMaps"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:esriUI="using:Esri.ArcGISRuntime.UI.Controls">
+﻿<UserControl x:Class="ArcGISRuntime.UWP.Samples.SearchPortalMaps.SearchPortalMaps"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:esriUI="using:Esri.ArcGISRuntime.UI.Controls">
     <UserControl.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="2.5, 5, 2.5, 0" />
+            <Setter Property="Margin" Value="2.5,5,2.5,0" />
             <Setter Property="HorizontalAlignment" Value="Right" />
         </Style>
         <Style TargetType="TextBox">
             <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="Margin" Value="2.5, 5, 2.5, 0" />
+            <Setter Property="Margin" Value="2.5,5,2.5,0" />
         </Style>
         <Style TargetType="Button">
             <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="Margin" Value="2.5, 5, 2.5, 0" />
+            <Setter Property="Margin" Value="2.5,5,2.5,0" />
         </Style>
     </UserControl.Resources>
     <Grid>
         <esriUI:MapView x:Name="MyMapView" />
         <Border Style="{StaticResource BorderStyle}">
-            <Grid>
-                <Grid x:Name="OAuthSettingsGrid"
-                      Visibility="Visible">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="OAuth settings"
-                               Grid.Row="0" Grid.ColumnSpan="2"
-                               TextAlignment="Center" HorizontalAlignment="Center" />
-                    <TextBlock Text="Client ID:"
-                               Grid.Row="1" Grid.Column="0" />
-                    <TextBox x:Name="ClientIdTextBox"
-                             Grid.Row="1" Grid.Column="1" />
-                    <TextBlock Text="Redirect URL:"
-                               Grid.Row="2" Grid.Column="0" />
-                    <TextBox x:Name="RedirectUrlTextBox"
-                             Grid.Row="2" Grid.Column="1" />
-                    <Button Content="Cancel"
-                            Grid.Row="3" Grid.Column="0"
-                            Click="CancelOAuthSettingsClicked" />
-                    <Button Content="Save OAuth Settings"
-                            Grid.Row="3" Grid.Column="1"
-                            Click="SaveOAuthSettingsClicked" />
-                </Grid>
-                <Grid x:Name="SearchUI" Visibility="Collapsed">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition Height="100" />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
-                    <RadioButton x:Name="SearchPublicMaps"
-                                 Grid.Column="0" Grid.Row="0"
-                                 HorizontalAlignment="Left"
-                                 IsChecked="True"
-                                 Content="Search public maps:"
-                                 Unchecked="RadioButtonUnchecked" />
-                    <TextBox x:Name="SearchText"
-                             Grid.Column="1" Grid.Row="0"
-                             IsEnabled="{Binding ElementName=SearchPublicMaps, Path=IsChecked}" />
-                    <RadioButton x:Name="BrowseMyMaps"
-                                 Grid.Column="0" Grid.Row="1"
-                                 Unchecked="RadioButtonUnchecked"
-                                 HorizontalAlignment="Left"
-                                 Content="Browse my maps" />
-                    <Button x:Name="SearchButton"
-                            Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2"
-                            Content="Get maps"
-                            Margin="0,5,0,0"
-                            Click="SearchButton_Click" />
-                    <ListBox x:Name="MapListBox"
-                             Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"
-                             SelectionMode="Single"
-                             Margin="0,5,0,0"
-                             DisplayMemberPath="Title"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
-                    <Button x:Name="LoadMapButton"
-                            Grid.Column="0" Grid.Row="4" Grid.ColumnSpan="2"
-                            Content="Load selected map"
-                            Margin="0,5,0,0"
-                            Click="LoadMapButtonClick" />
-                </Grid>
+            <Grid x:Name="SearchUI">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition Height="200" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <RadioButton x:Name="SearchPublicMaps"
+                             Grid.Row="0"
+                             Grid.Column="0"
+                             HorizontalAlignment="Left"
+                             Content="Search public maps:"
+                             IsChecked="True" />
+                <TextBox x:Name="SearchText"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         IsEnabled="{Binding ElementName=SearchPublicMaps, Path=IsChecked}" />
+                <RadioButton x:Name="BrowseMyMaps"
+                             Grid.Row="1"
+                             Grid.Column="0"
+                             HorizontalAlignment="Left"
+                             Content="Browse my maps" />
+                <Button x:Name="SearchButton"
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Margin="0,5,0,0"
+                        Click="SearchButton_Click"
+                        Content="Get maps" />
+                <ListBox x:Name="MapListBox"
+                         Grid.Row="3"
+                         Grid.Column="0"
+                         Grid.ColumnSpan="2"
+                         Margin="0,5,0,0"
+                         DisplayMemberPath="Title"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         SelectionMode="Single" />
+                <Button x:Name="LoadMapButton"
+                        Grid.Row="4"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Margin="0,5,0,0"
+                        Click="LoadMapButtonClick"
+                        Content="Load selected map" />
             </Grid>
         </Border>
     </Grid>

@@ -24,8 +24,7 @@
             <ColumnDefinition />
             <ColumnDefinition Width="300" />
         </Grid.ColumnDefinitions>
-        <ScrollViewer Grid.Column="1"
-                      Padding="5">
+        <ScrollViewer Grid.Column="1" Padding="5">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -40,22 +39,21 @@
                 <TextBlock Text="Select a basemap" />
                 <ComboBox x:Name="BasemapListBox"
                           Grid.Row="1"
-                          HorizontalAlignment="Stretch"
-                          SelectionChanged="BasemapListView_SelectionChanged" />
-                <TextBlock Text="Choose layers"
-                           Grid.Row="2" />
+                          HorizontalAlignment="Stretch" />
+                <TextBlock Grid.Row="2" Text="Choose layers" />
                 <ListBox x:Name="OperationalLayerListBox"
-                         SelectionMode="Multiple"
                          Grid.Row="3"
-                         SelectionChanged="LayerSelectionChanged">
+                         SelectionChanged="LayerSelectionChanged"
+                         SelectionMode="Multiple">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Key}" />
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <TextBlock Text="Pan and zoom to set initial extent"
-                           Grid.Row="4" Grid.Column="0" />
+                <TextBlock Grid.Row="4"
+                           Grid.Column="0"
+                           Text="Pan and zoom to set initial extent" />
                 <Grid Grid.Row="5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -67,38 +65,45 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="X Min:"
-                               Grid.Row="0" Grid.Column="0"
-                               Margin="0,0,5,0" />
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Margin="0,0,5,0"
+                               Text="X Min:" />
                     <TextBox x:Name="XMinTextBox"
-                             Grid.Row="0" Grid.Column="1"
+                             Grid.Row="0"
+                             Grid.Column="1"
                              IsReadOnly="True" />
-                    <TextBlock Text="Y Min:"
-                               Grid.Row="1" Grid.Column="0"
-                               Margin="0,0,5,0" />
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Margin="0,0,5,0"
+                               Text="Y Min:" />
                     <TextBox x:Name="YMinTextBox"
-                             Grid.Row="1" Grid.Column="1"
+                             Grid.Row="1"
+                             Grid.Column="1"
                              IsReadOnly="True" />
-                    <TextBlock Text="X Max:"
-                               Grid.Row="2" Grid.Column="0"
-                               Margin="0,0,5,0" />
+                    <TextBlock Grid.Row="2"
+                               Grid.Column="0"
+                               Margin="0,0,5,0"
+                               Text="X Max:" />
                     <TextBox x:Name="XMaxTextBox"
-                             Grid.Row="2" Grid.Column="1"
+                             Grid.Row="2"
+                             Grid.Column="1"
                              IsReadOnly="True" />
-                    <TextBlock Text="Y Max:"
-                               Grid.Row="3" Grid.Column="0"
-                               Margin="0,0,5,0" />
+                    <TextBlock Grid.Row="3"
+                               Grid.Column="0"
+                               Margin="0,0,5,0"
+                               Text="Y Max:" />
                     <TextBox x:Name="YMaxTextBox"
-                             Grid.Row="3" Grid.Column="1"
+                             Grid.Row="3"
+                             Grid.Column="1"
                              IsReadOnly="True" />
                 </Grid>
-                <Button Content="New map"
-                        Grid.Row="6"
-                        Click="ClearMapClicked" />
+                <Button Grid.Row="6"
+                        Click="ClearMapClicked"
+                        Content="New map" />
                 <Grid x:Name="SaveMapGrid"
                       Grid.Row="7"
-                      Margin="10"
-                      Visibility="Collapsed">
+                      Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -110,70 +115,50 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Title:"
-                               HorizontalAlignment="Right" Margin="0,0,5,0" />
+                    <TextBlock Margin="0,0,5,0"
+                               HorizontalAlignment="Right"
+                               Text="Title:" />
                     <TextBox x:Name="TitleTextBox"
-                             Grid.Row="0" Grid.Column="1"
+                             Grid.Row="0"
+                             Grid.Column="1"
                              Text="My Map" />
-                    <TextBlock Text="Description:"
-                               Grid.Row="1" Grid.Column="0"
-                               HorizontalAlignment="Right" Margin="0,0,5,0" />
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Margin="0,0,5,0"
+                               HorizontalAlignment="Right"
+                               Text="Description:" />
                     <TextBox x:Name="DescriptionTextBox"
-                             Grid.Row="1" Grid.Column="1"
-                             TextWrapping="Wrap"
-                             Text="Authored and saved using ArcGIS Runtime SDK." />
-                    <TextBlock Text="Tags:"
-                               Grid.Row="2" Grid.Column="0"
-                               HorizontalAlignment="Right" Margin="0,0,5,0" />
+                             Grid.Row="1"
+                             Grid.Column="1"
+                             Text="Authored and saved using ArcGIS Runtime SDK."
+                             TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="2"
+                               Grid.Column="0"
+                               Margin="0,0,5,0"
+                               HorizontalAlignment="Right"
+                               Text="Tags:" />
                     <TextBox x:Name="TagsTextBox"
-                             Grid.Row="2" Grid.Column="1"
+                             Grid.Row="2"
+                             Grid.Column="1"
                              Text="ArcGIS Runtime, Sample" />
-                    <Button Content="Save map to portal"
-                            Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
-                            IsEnabled="{Binding ElementName=MyMapView }"
-                            Click="SaveMapClicked" />
+                    <Button Grid.Row="3"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            Click="SaveMapClicked"
+                            Content="Save map to portal"
+                            IsEnabled="{Binding ElementName=MyMapView}" />
                     <ProgressBar x:Name="SaveProgressBar"
-                                 Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
-                                 Height="15" Margin="10,0,10,0"
+                                 Grid.Row="4"
+                                 Grid.Column="0"
+                                 Grid.ColumnSpan="2"
+                                 Height="15"
+                                 Margin="10,0,10,0"
                                  HorizontalAlignment="Stretch"
-                                 IsIndeterminate="True" Visibility="Collapsed" />
+                                 IsIndeterminate="True"
+                                 Visibility="Collapsed" />
                 </Grid>
-                <Grid x:Name="OAuthSettingsGrid"
-                      Grid.Row="7"
-                      Visibility="Visible">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Configure OAuth"
-                               Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" />
-                    <TextBlock Text="Client ID:"
-                               Grid.Row="1" Grid.Column="0"
-                               HorizontalAlignment="Right" Margin="0,0,5,0" />
-                    <TextBox x:Name="ClientIdTextBox"
-                             Grid.Row="1" Grid.Column="1"
-                             HorizontalAlignment="Stretch" />
-                    <TextBlock Text="Redirect URL:"
-                               Grid.Row="2" Grid.Column="0"
-                               HorizontalAlignment="Right" Margin="0,0,5,0" />
-                    <TextBox x:Name="RedirectUrlTextBox"
-                             Grid.Row="2" Grid.Column="1"
-                             HorizontalAlignment="Stretch" />
-                    <Button Content="Save OAuth Settings"
-                            Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
-                            Click="SaveOAuthSettingsClicked" />
-                </Grid>
-
             </Grid>
         </ScrollViewer>
-
-        <esriUI:MapView x:Name="MyMapView"
-                        Grid.Column="0" />
+        <esriUI:MapView x:Name="MyMapView" Grid.Column="0" />
     </Grid>
 </UserControl>

@@ -1,23 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    x:Class="ArcGISRuntime.Samples.SearchPortalMaps.SearchPortalMaps"
-    xmlns="http://xamarin.com/schemas/2014/forms"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:d="http://xamarin.com/schemas/2014/forms/design"
-    xmlns:esriUI="clr-namespace:Esri.ArcGISRuntime.Xamarin.Forms;assembly=Esri.ArcGISRuntime.Xamarin.Forms">
+<ContentPage x:Class="ArcGISRuntime.Samples.SearchPortalMaps.SearchPortalMaps"
+             xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:esriUI="clr-namespace:Esri.ArcGISRuntime.Xamarin.Forms;assembly=Esri.ArcGISRuntime.Xamarin.Forms">
     <Grid x:Name="LayoutRoot">
         <Grid.RowDefinitions>
             <RowDefinition />
             <RowDefinition Height="70" />
         </Grid.RowDefinitions>
-
         <esriUI:MapView x:Name="MyMapView" Grid.Row="0" />
-        <TableView
-            x:Name="SearchMapsUI"
-            Grid.Row="0"
-            BackgroundColor="WhiteSmoke"
-            Intent="Form"
-            IsVisible="False">
+        <TableView x:Name="SearchMapsUI"
+                   Grid.Row="0"
+                   BackgroundColor="WhiteSmoke"
+                   Intent="Form"
+                   IsVisible="False">
             <TableRoot>
                 <TableSection Title="Search public maps">
                     <ViewCell>
@@ -29,12 +25,11 @@
                                     </OnPlatform>
                                 </Label.TextColor>
                             </Label>
-                            <Entry
-                                x:Name="SearchTextEntry"
-                                HorizontalOptions="Start"
-                                Placeholder=""
-                                VerticalOptions="Center"
-                                WidthRequest="240">
+                            <Entry x:Name="SearchTextEntry"
+                                   HorizontalOptions="Start"
+                                   Placeholder=""
+                                   VerticalOptions="Center"
+                                   WidthRequest="240">
                                 <Entry.TextColor>
                                     <OnPlatform x:TypeArguments="Color">
                                         <On Platform="Android" Value="DarkGray" />
@@ -45,26 +40,23 @@
                     </ViewCell>
                     <ViewCell>
                         <StackLayout HorizontalOptions="FillAndExpand" Orientation="Horizontal">
-                            <Button
-                                Margin="20,0"
-                                Clicked="CancelSearchClicked"
-                                HorizontalOptions="FillAndExpand"
-                                Text="Cancel" />
-                            <Button
-                                Clicked="SearchMapsClicked"
-                                HorizontalOptions="FillAndExpand"
-                                Text="Search" />
+                            <Button Margin="20,0"
+                                    Clicked="CancelSearchClicked"
+                                    HorizontalOptions="FillAndExpand"
+                                    Text="Cancel" />
+                            <Button Clicked="SearchMapsClicked"
+                                    HorizontalOptions="FillAndExpand"
+                                    Text="Search" />
                         </StackLayout>
                     </ViewCell>
                 </TableSection>
             </TableRoot>
         </TableView>
-        <ListView
-            x:Name="MapsListView"
-            BackgroundColor="WhiteSmoke"
-            IsVisible="False"
-            ItemSelected="MapItemSelected"
-            SelectionMode="Single">
+        <ListView x:Name="MapsListView"
+                  BackgroundColor="WhiteSmoke"
+                  IsVisible="False"
+                  ItemSelected="MapItemSelected"
+                  SelectionMode="Single">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <TextCell Text="{Binding Title}">
@@ -77,112 +69,15 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-        <Grid
-            x:Name="OAuthSettingsGrid"
-            Grid.Row="0"
-            BackgroundColor="WhiteSmoke"
-            HorizontalOptions="Center"
-            VerticalOptions="Center"
-            WidthRequest="300">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="60" />
-                <RowDefinition Height="40" />
-                <RowDefinition Height="40" />
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="100" />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-            <Label
-                Grid.Row="0"
-                Grid.ColumnSpan="2"
-                HorizontalOptions="Center"
-                Text="OAuth Settings"
-                VerticalOptions="Start">
-                <Label.TextColor>
-                    <OnPlatform x:TypeArguments="Color">
-                        <On Platform="Android" Value="DarkGray" />
-                    </OnPlatform>
-                </Label.TextColor>
-            </Label>
-            <Label
-                Grid.Row="1"
-                HorizontalOptions="End"
-                Text="Client ID:"
-                VerticalOptions="Center">
-                <Label.TextColor>
-                    <OnPlatform x:TypeArguments="Color">
-                        <On Platform="Android" Value="DarkGray" />
-                    </OnPlatform>
-                </Label.TextColor>
-            </Label>
-            <Entry
-                x:Name="ClientIDEntry"
-                Grid.Row="1"
-                Grid.Column="1"
-                HorizontalOptions="Start"
-                Placeholder="mYCl1enTiD"
-                VerticalOptions="Center"
-                WidthRequest="240">
-                <Entry.TextColor>
-                    <OnPlatform x:TypeArguments="Color">
-                        <On Platform="Android" Value="DarkGray" />
-                    </OnPlatform>
-                </Entry.TextColor>
-            </Entry>
-            <Label
-                Grid.Row="2"
-                HorizontalOptions="End"
-                Text="Redirect URL:"
-                VerticalOptions="Center">
-                <Label.TextColor>
-                    <OnPlatform x:TypeArguments="Color">
-                        <On Platform="Android" Value="DarkGray" />
-                    </OnPlatform>
-                </Label.TextColor>
-            </Label>
-            <Entry
-                x:Name="RedirectUrlEntry"
-                Grid.Row="2"
-                Grid.Column="1"
-                HorizontalOptions="Start"
-                Placeholder="http://my.redirect/url"
-                VerticalOptions="Center"
-                WidthRequest="240">
-                <Entry.TextColor>
-                    <OnPlatform x:TypeArguments="Color">
-                        <On Platform="Android" Value="DarkGray" />
-                    </OnPlatform>
-                </Entry.TextColor>
-            </Entry>
-            <Button
-                Grid.Row="3"
-                Grid.Column="0"
-                Clicked="OAuthSettingsCancel"
-                HorizontalOptions="FillAndExpand"
-                Text="Cancel"
-                VerticalOptions="End" />
-            <Button
-                Grid.Row="3"
-                Grid.Column="1"
-                Clicked="SaveOAuthSettings"
-                HorizontalOptions="FillAndExpand"
-                Text="Use Settings"
-                VerticalOptions="End" />
-        </Grid>
-        <StackLayout
-            Grid.Row="1"
-            HorizontalOptions="FillAndExpand"
-            Orientation="Horizontal">
-            <Button
-                Clicked="ShowSearchUI"
-                HorizontalOptions="FillAndExpand"
-                Text="Search Maps" />
-            <Button
-                Clicked="GetMyMaps"
-                HorizontalOptions="FillAndExpand"
-                Text="My Maps" />
+        <StackLayout Grid.Row="1"
+                     HorizontalOptions="FillAndExpand"
+                     Orientation="Horizontal">
+            <Button Clicked="ShowSearchUI"
+                    HorizontalOptions="FillAndExpand"
+                    Text="Search Maps" />
+            <Button Clicked="GetMyMaps"
+                    HorizontalOptions="FillAndExpand"
+                    Text="My Maps" />
         </StackLayout>
     </Grid>
 </ContentPage>

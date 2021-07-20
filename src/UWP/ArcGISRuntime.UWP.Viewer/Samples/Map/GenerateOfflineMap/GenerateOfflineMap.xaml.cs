@@ -1,16 +1,15 @@
-// Copyright 2018 Esri.
+// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an 
-// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific 
+// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
 // language governing permissions and limitations under the License.
 
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.Portal;
-using Esri.ArcGISRuntime.Security;
 using Esri.ArcGISRuntime.Symbology;
 using Esri.ArcGISRuntime.Tasks;
 using Esri.ArcGISRuntime.Tasks.Offline;
@@ -45,7 +44,7 @@ namespace ArcGISRuntime.UWP.Samples.GenerateOfflineMap
         {
             InitializeComponent();
 
-            // Load the web map, show area of interest, restrict map interaction, and set up authorization. 
+            // Load the web map, show area of interest, restrict map interaction, and set up authorization.
             Initialize();
         }
 
@@ -53,9 +52,6 @@ namespace ArcGISRuntime.UWP.Samples.GenerateOfflineMap
         {
             try
             {
-                // Call a function to set up the AuthenticationManager for OAuth.
-                SetOAuthInfo();
-
                 // Create the ArcGIS Online portal.
                 ArcGISPortal portal = await ArcGISPortal.CreateAsync();
 
@@ -216,12 +212,12 @@ namespace ArcGISRuntime.UWP.Samples.GenerateOfflineMap
             GenerateOfflineMapJob job = sender as GenerateOfflineMapJob;
 
             // Dispatch to the UI thread.
-            await Dispatcher.RunAsync( Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-            {
-                // Show the percent complete and update the progress bar.
-                Percentage.Text = job.Progress > 0 ? job.Progress.ToString() + " %" : string.Empty;
-                progressBar.Value = job.Progress;
-            });
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+           {
+               // Show the percent complete and update the progress bar.
+               Percentage.Text = job.Progress > 0 ? job.Progress.ToString() + " %" : string.Empty;
+               progressBar.Value = job.Progress;
+           });
         }
 
         private void CancelJobButton_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
@@ -229,56 +225,5 @@ namespace ArcGISRuntime.UWP.Samples.GenerateOfflineMap
             // The user canceled the job.
             _generateOfflineMapJob.Cancel();
         }
-
-        #region Authentication
-        // Constants for OAuth-related values.
-        // - The URL of the portal to authenticate with (ArcGIS Online).
-        private const string ServerUrl = "https://www.arcgis.com/sharing/rest";
-        // - The Client ID for an app registered with the server (the ID below is for a public app created by the ArcGIS Runtime team).
-        private const string AppClientId = @"lgAdHkYZYlwwfAhC";
-        // - An optional client secret for the app (only needed for the OAuthAuthorizationCode authorization type).
-        private const string ClientSecret = "";
-        // - A URL for redirecting after a successful authorization (this must be a URL configured with the app).
-        private const string OAuthRedirectUrl = @"my-ags-app://auth";
-
-        private void SetOAuthInfo()
-        {
-            // Register the server information with the AuthenticationManager.
-            ServerInfo serverInfo = new ServerInfo(new Uri(ServerUrl))
-            {
-                TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit,
-                OAuthClientInfo = new OAuthClientInfo(AppClientId, new Uri(OAuthRedirectUrl))
-            };
-
-            // Register this server with AuthenticationManager.
-            AuthenticationManager.Current.RegisterServer(serverInfo);
-
-            // Use a function in this class to challenge for credentials.
-            AuthenticationManager.Current.ChallengeHandler = new ChallengeHandler(CreateCredentialAsync);
-
-            // Note: In a WPF app, you need to associate a custom IOAuthAuthorizeHandler component with the AuthenticationManager to 
-            //     handle showing OAuth login controls (AuthenticationManager.Current.OAuthAuthorizeHandler = new MyOAuthAuthorize();).
-            //     The UWP AuthenticationManager, however, uses a built-in IOAuthAuthorizeHandler (based on WebAuthenticationBroker).
-        }
-
-        public async Task<Credential> CreateCredentialAsync(CredentialRequestInfo info)
-        {
-            // ChallengeHandler function for AuthenticationManager that will be called whenever a secured resource is accessed.
-            Credential credential = null;
-
-            try
-            {
-                // AuthenticationManager will handle challenging the user for credentials.
-                credential = await AuthenticationManager.Current.GenerateCredentialAsync(info.ServiceUri);
-            }
-            catch (Exception)
-            {
-                // Exception will be reported in calling function.
-                throw;
-            }
-
-            return credential;
-        }
     }
-    #endregion
 }

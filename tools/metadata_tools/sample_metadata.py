@@ -454,6 +454,8 @@ class sample_metadata:
         if platform == "Android" and self.formal_name in ["NavigateAR", "CollectDataAR", "ViewHiddenInfrastructureAR"]:
             self.source_files.append("../../../Resources/values/Attrs.xml")
             self.source_files.append("../../../Controls/JoystickSeekBar.cs")
+        if self.formal_name in ["OAuth", "AuthorMap", "NavigateAR", "SearchPortalMaps"]:
+            self.source_files.append("../../../Helpers/ArcGISLoginPrompt.cs")
         self.source_files.sort()
 
     def rewrite_files_in_place(source_dir, replacements_dict):

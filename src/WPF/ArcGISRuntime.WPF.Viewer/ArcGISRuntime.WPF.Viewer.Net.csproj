@@ -102,6 +102,11 @@
     </PackageReference>
     <PackageReference Include="System.Speech" Version="5.0.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Helpers\ArcGISLoginPrompt.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+  </ItemGroup>
   <!-- Imports -->
   <Import Project="..\..\ArcGISRuntime.Samples.Shared\ArcGISRuntime.Samples.Shared.projitems" Label="Shared" />
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">

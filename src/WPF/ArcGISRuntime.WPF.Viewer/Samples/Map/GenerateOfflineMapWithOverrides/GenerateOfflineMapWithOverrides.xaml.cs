@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Esri.
+﻿// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
@@ -11,7 +11,6 @@ using Esri.ArcGISRuntime.Data;
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.Portal;
-using Esri.ArcGISRuntime.Security;
 using Esri.ArcGISRuntime.Symbology;
 using Esri.ArcGISRuntime.Tasks;
 using Esri.ArcGISRuntime.Tasks.Offline;
@@ -23,7 +22,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Navigation;
 using System.Windows.Threading;
 
 namespace ArcGISRuntime.WPF.Samples.GenerateOfflineMapWithOverrides
@@ -55,9 +53,6 @@ namespace ArcGISRuntime.WPF.Samples.GenerateOfflineMapWithOverrides
         {
             try
             {
-                // Call a function to set up the AuthenticationManager for OAuth.
-                SetOAuthInfo();
-
                 // Create the ArcGIS Online portal.
                 ArcGISPortal portal = await ArcGISPortal.CreateAsync();
 
@@ -91,7 +86,7 @@ namespace ArcGISRuntime.WPF.Samples.GenerateOfflineMapWithOverrides
                 // Hide the map loading progress indicator.
                 LoadingIndicator.Visibility = Visibility.Collapsed;
 
-                // Clean up any existing output data folders that might exist from running this sample previously. 
+                // Clean up any existing output data folders that might exist from running this sample previously.
                 // The output data folder is where the results of the taking the web map offline get stored on the device.
                 MyMapView.Unloaded += (s, e) =>
                 {
@@ -236,7 +231,7 @@ namespace ArcGISRuntime.WPF.Samples.GenerateOfflineMapWithOverrides
             // Get the min and max scale from the UI.
             int minScale = (int)MinScaleEntry.Value;
             int maxScale = (int)MaxScaleEntry.Value;
-            
+
             // Re-add selected scales.
             for (int i = minScale; i < maxScale; i++)
             {
@@ -346,7 +341,7 @@ namespace ArcGISRuntime.WPF.Samples.GenerateOfflineMapWithOverrides
         private long GetServiceLayerId(FeatureLayer layer)
         {
             // Find the service feature table for the layer; this assumes the layer is backed by a service feature table.
-            ServiceFeatureTable serviceTable = (ServiceFeatureTable) layer.FeatureTable;
+            ServiceFeatureTable serviceTable = (ServiceFeatureTable)layer.FeatureTable;
 
             // Return the layer ID.
             return serviceTable.LayerInfo.ServiceLayerId;
@@ -373,236 +368,6 @@ namespace ArcGISRuntime.WPF.Samples.GenerateOfflineMapWithOverrides
         {
             // The user canceled the job.
             _generateOfflineMapJob.Cancel();
-        }
-
-        #region Authentication
-
-        // Constants for OAuth-related values.
-        // - The URL of the portal to authenticate with (ArcGIS Online).
-        private const string ServerUrl = "https://www.arcgis.com/sharing/rest";
-
-        // - The Client ID for an app registered with the server (the ID below is for a public app created by the ArcGIS Runtime team).
-        private const string AppClientId = @"lgAdHkYZYlwwfAhC";
-
-        // - A URL for redirecting after a successful authorization (this must be a URL configured with the app).
-        private const string OAuthRedirectUrl = @"my-ags-app://auth";
-
-        private void SetOAuthInfo()
-        {
-            // Register the server information with the AuthenticationManager, including the OAuth settings.
-            ServerInfo serverInfo = new ServerInfo(new Uri(ServerUrl))
-            {
-                TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit,
-                OAuthClientInfo = new OAuthClientInfo(AppClientId, new Uri(OAuthRedirectUrl))
-            };
-
-            // Register this server with AuthenticationManager.
-            AuthenticationManager.Current.RegisterServer(serverInfo);
-
-            // Use the custom OAuthAuthorize class (defined in this module) to handle OAuth communication.
-            AuthenticationManager.Current.OAuthAuthorizeHandler = new OAuthAuthorize();
-
-            // Use a function in this class to challenge for credentials.
-            AuthenticationManager.Current.ChallengeHandler = new ChallengeHandler(CreateCredentialAsync);
-        }
-
-        public async Task<Credential> CreateCredentialAsync(CredentialRequestInfo info)
-        {
-            // ChallengeHandler function for AuthenticationManager that will be called whenever a secured resource is accessed.
-            Credential credential = null;
-
-            try
-            {
-                // AuthenticationManager will handle challenging the user for credentials.
-                credential = await AuthenticationManager.Current.GenerateCredentialAsync(info.ServiceUri);
-            }
-            catch (Exception)
-            {
-                // Exception will be reported in calling function.
-                throw;
-            }
-
-            return credential;
-        }
-
-        #endregion
-    }
-
-    public class OAuthAuthorize : IOAuthAuthorizeHandler
-    {
-        // A window to contain the OAuth UI.
-        private Window _authWindow;
-
-        // A TaskCompletionSource to track the completion of the authorization.
-        private TaskCompletionSource<IDictionary<string, string>> _taskCompletionSource;
-
-        // URL for the authorization callback result (the redirect URI configured for the application).
-        private string _callbackUrl;
-
-        // URL that handles the OAuth request.
-        private string _authorizeUrl;
-
-        // A function to handle authorization requests. It takes the URIs for the secured service, the authorization endpoint, and the redirect URI.
-        public Task<IDictionary<string, string>> AuthorizeAsync(Uri serviceUri, Uri authorizeUri, Uri callbackUri)
-        {
-            // If the TaskCompletionSource.Task has not completed, authorization is in progress.
-            if (_taskCompletionSource != null || _authWindow != null)
-            {
-                // Allow only one authorization process at a time.
-                throw new Exception("Authorization is in progress");
-            }
-
-            // Store the authorization and redirect URLs.
-            _authorizeUrl = authorizeUri.AbsoluteUri;
-            _callbackUrl = callbackUri.AbsoluteUri;
-
-            // Create a task completion source to track completion.
-            _taskCompletionSource = new TaskCompletionSource<IDictionary<string, string>>();
-
-            // Call a function to show the login controls, make sure it runs on the UI thread.
-            Dispatcher dispatcher = Application.Current.Dispatcher;
-            if (dispatcher == null || dispatcher.CheckAccess())
-                AuthorizeOnUIThread(_authorizeUrl);
-            else
-            {
-                Action authorizeOnUIAction = () => AuthorizeOnUIThread(_authorizeUrl);
-                dispatcher.BeginInvoke(authorizeOnUIAction);
-            }
-
-            // Return the task associated with the TaskCompletionSource.
-            return _taskCompletionSource.Task;
-        }
-
-        // A function to challenge for OAuth credentials on the UI thread.
-        private void AuthorizeOnUIThread(string authorizeUri)
-        {
-            // Create a WebBrowser control to display the authorize page.
-            WebBrowser authBrowser = new WebBrowser();
-
-            // Handle the navigating event for the browser to check for a response sent to the redirect URL.
-            authBrowser.Navigating += WebBrowserOnNavigating;
-
-            // Display the web browser in a new window.
-            _authWindow = new Window
-            {
-                Content = authBrowser,
-                Height = 420,
-                Width = 350,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-
-            // Set the app's window as the owner of the browser window (if main window closes, so will the browser).
-            if (Application.Current != null && Application.Current.MainWindow != null)
-            {
-                _authWindow.Owner = Application.Current.MainWindow;
-            }
-
-            // Handle the window closed event then navigate to the authorize url.
-            _authWindow.Closed += OnWindowClosed;
-            authBrowser.Navigate(authorizeUri);
-
-            // Display the Window.
-            if (_authWindow != null)
-            {
-                _authWindow.ShowDialog();
-            }
-        }
-
-        private void OnWindowClosed(object sender, EventArgs e)
-        {
-            // If the browser window closes, return the focus to the main window.
-            if (_authWindow != null && _authWindow.Owner != null)
-            {
-                _authWindow.Owner.Focus();
-            }
-
-            // If the task wasn't completed, the user must have closed the window without logging in.
-            if (_taskCompletionSource != null && !_taskCompletionSource.Task.IsCompleted)
-            {
-                // Set the task completion to indicate a canceled operation.
-                _taskCompletionSource.TrySetCanceled();
-            }
-
-            _taskCompletionSource = null;
-            _authWindow = null;
-        }
-
-        // Handle browser navigation (page content changing).
-        private void WebBrowserOnNavigating(object sender, NavigatingCancelEventArgs e)
-        {
-            // Check for a response to the callback url.
-            WebBrowser webBrowser = sender as WebBrowser;
-            Uri uri = e.Uri;
-
-            // If no browser, uri, or an empty url return.
-            if (webBrowser == null || uri == null || _taskCompletionSource == null || String.IsNullOrEmpty(uri.AbsoluteUri))
-            {
-                return;
-            }
-
-            // Check if the new content is from the callback url.
-            bool isRedirected = uri.AbsoluteUri.StartsWith(_callbackUrl);
-
-            if (isRedirected)
-            {
-                // Cancel the event to prevent it from being handled elsewhere.
-                e.Cancel = true;
-
-                // Get a local copy of the task completion source.
-                TaskCompletionSource<IDictionary<string, string>> tcs = _taskCompletionSource;
-                _taskCompletionSource = null;
-
-                // Close the window.
-                if (_authWindow != null)
-                {
-                    _authWindow.Close();
-                }
-
-                // Call a helper function to decode the response parameters (which includes the authorization key).
-                IDictionary<string, string> authResponse = DecodeParameters(uri);
-
-                // Set the result for the task completion source.
-                tcs.SetResult(authResponse);
-            }
-        }
-
-        // A helper function that decodes values from a querystring into a dictionary of keys and values.
-        private static IDictionary<string, string> DecodeParameters(Uri uri)
-        {
-            // Create a dictionary of key value pairs returned in an OAuth authorization response URI query string.
-            string answer = "";
-
-            // Get the values from the URI fragment or query string.
-            if (!string.IsNullOrEmpty(uri.Fragment))
-            {
-                answer = uri.Fragment.Substring(1);
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(uri.Query))
-                {
-                    answer = uri.Query.Substring(1);
-                }
-            }
-
-            // Parse parameters into key / value pairs.
-            Dictionary<string, string> keyValueDictionary = new Dictionary<string, string>();
-            string[] keysAndValues = answer.Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string kvString in keysAndValues)
-            {
-                string[] pair = kvString.Split('=');
-                string key = pair[0];
-                string value = string.Empty;
-                if (key.Length > 1)
-                {
-                    value = Uri.UnescapeDataString(pair[1]);
-                }
-
-                keyValueDictionary.Add(key, value);
-            }
-
-            // Return the dictionary of string keys/values.
-            return keyValueDictionary;
         }
     }
 }

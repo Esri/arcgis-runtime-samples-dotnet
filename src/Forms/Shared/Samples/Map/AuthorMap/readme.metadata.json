@@ -36,6 +36,7 @@
         "Portal"
     ],
     "snippets": [
+        "../../../Helpers/ArcGISLoginPrompt.cs",
         "AuthorMap.xaml",
         "AuthorMap.xaml.cs",
         "SaveMapPage.xaml",

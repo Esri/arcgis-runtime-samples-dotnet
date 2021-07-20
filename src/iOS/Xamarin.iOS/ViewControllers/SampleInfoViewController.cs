@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Esri.
+﻿// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
@@ -126,8 +126,20 @@ namespace ArcGISRuntime
                 // Create a dictionary of the files.
                 _sourceCodeFiles = new Dictionary<string, string>();
 
+                List<string> sourceCodePaths = new List<string>(Directory.GetFiles(sourceFilesPath, "*.cs"));
+
+                // Add additional class files from the sample.
+                if (_info.ClassFiles != null)
+                {
+                    foreach (string additionalPath in _info.ClassFiles)
+                    {
+                        string path = Path.Combine(NSBundle.MainBundle.BundlePath, additionalPath).Replace('\\', '/');
+                        sourceCodePaths.Add(path);
+                    }
+                }
+
                 // Loop over every source code file in the sample directory.
-                foreach (string sourceCodePath in Directory.GetFiles(sourceFilesPath, "*.cs"))
+                foreach (string sourceCodePath in sourceCodePaths)
                 {
                     // Get the code as a string.
                     string baseContent = File.ReadAllText(sourceCodePath);

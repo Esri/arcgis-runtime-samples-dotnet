@@ -27,6 +27,7 @@
         "PortalQueryResultSet"
     ],
     "snippets": [
+        "../../../Helpers/ArcGISLoginPrompt.cs",
         "SearchPortalMaps.xaml",
         "SearchPortalMaps.xaml.cs"
     ],

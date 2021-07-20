@@ -1,10 +1,10 @@
-// Copyright 2019 Esri.
+// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an 
-// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific 
+// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
 // language governing permissions and limitations under the License.
 
 using Android.App;
@@ -14,7 +14,6 @@ using ArcGISRuntime.Samples.Managers;
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.Portal;
-using Esri.ArcGISRuntime.Security;
 using Esri.ArcGISRuntime.Symbology;
 using Esri.ArcGISRuntime.Tasks;
 using Esri.ArcGISRuntime.Tasks.Offline;
@@ -26,19 +25,18 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Xamarin.Auth;
 
 namespace ArcGISRuntimeXamarin.Samples.OfflineBasemapByReference
 {
-    [Activity (ConfigurationChanges=Android.Content.PM.ConfigChanges.Orientation | Android.Content.PM.ConfigChanges.ScreenSize)]
+    [Activity(ConfigurationChanges = Android.Content.PM.ConfigChanges.Orientation | Android.Content.PM.ConfigChanges.ScreenSize)]
     [ArcGISRuntime.Samples.Shared.Attributes.Sample(
         name: "Generate offline map with local basemap",
         category: "Map",
         description: "Use the `OfflineMapTask` to take a web map offline, but instead of downloading an online basemap, use one which is already on the device.",
         instructions: "1. Use the button to start taking the map offline.",
         tags: new[] { "basemap", "download", "local", "offline", "save", "web map" })]
-    [ArcGISRuntime.Samples.Shared.Attributes.OfflineData("85282f2aaa2844d8935cdb8722e22a93")]
-    public class OfflineBasemapByReference : Activity, IOAuthAuthorizeHandler
+    [ArcGISRuntime.Samples.Shared.Attributes.OfflineData("628e8e3521cf45e9a28a12fe10c02c4d")]
+    public class OfflineBasemapByReference : Activity
     {
         // Hold references to the UI controls.
         private MapView _mapView;
@@ -66,7 +64,7 @@ namespace ArcGISRuntimeXamarin.Samples.OfflineBasemapByReference
         private void ConfigureOfflineJobForBasemap(GenerateOfflineMapParameters parameters, Action completionHandler)
         {
             // Don't give the user a choice if there is no basemap specified.
-            if (String.IsNullOrWhiteSpace(parameters.ReferenceBasemapFilename))
+            if (string.IsNullOrWhiteSpace(parameters.ReferenceBasemapFilename))
             {
                 return;
             }
@@ -109,9 +107,6 @@ namespace ArcGISRuntimeXamarin.Samples.OfflineBasemapByReference
         {
             try
             {
-                // Call a function to set up the AuthenticationManager for OAuth.
-                SetOAuthInfo();
-
                 // Create the ArcGIS Online portal.
                 ArcGISPortal portal = await ArcGISPortal.CreateAsync();
 
@@ -309,161 +304,9 @@ namespace ArcGISRuntimeXamarin.Samples.OfflineBasemapByReference
             builder.SetCancelable(true);
             builder.SetMessage("Generating offline map ...");
             _alertDialog = builder.Create();
-            _alertDialog.SetButton("Cancel", (s, e) => { _generateOfflineMapJob.Cancel(); });
+            _alertDialog.SetButton("Cancel", (s, e) => { _generateOfflineMapJob?.Cancel(); });
         }
 
         #endregion Generate offline map
-
-        #region Authentication
-
-        // Constants for OAuth-related values.
-        // - The URL of the portal to authenticate with (ArcGIS Online).
-        private const string ServerUrl = "https://www.arcgis.com/sharing/rest";
-
-        // - The Client ID for an app registered with the server (the ID below is for a public app created by the ArcGIS Runtime team).
-        private const string AppClientId = @"lgAdHkYZYlwwfAhC";
-
-        // - A URL for redirecting after a successful authorization (this must be a URL configured with the app).
-        private const string OAuthRedirectUrl = @"my-ags-app://auth";
-
-        private void SetOAuthInfo()
-        {
-            // Register the server information with the AuthenticationManager.
-            ServerInfo serverInfo = new ServerInfo(new Uri(ServerUrl))
-            {
-                TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit,
-                OAuthClientInfo = new OAuthClientInfo(AppClientId, new Uri(OAuthRedirectUrl))
-            };
-
-            // Register this server with AuthenticationManager.
-            AuthenticationManager.Current.RegisterServer(serverInfo);
-
-            // Use a function in this class to challenge for credentials.
-            AuthenticationManager.Current.ChallengeHandler = new ChallengeHandler(CreateCredentialAsync);
-
-            // Set the OAuthAuthorizeHandler component (this class) for Android or iOS platforms.
-            AuthenticationManager.Current.OAuthAuthorizeHandler = this;
-        }
-
-        // ChallengeHandler function that will be called whenever access to a secured resource is attempted.
-        private async Task<Credential> CreateCredentialAsync(CredentialRequestInfo info)
-        {
-            Credential credential = null;
-
-            try
-            {
-                // IOAuthAuthorizeHandler will challenge the user for OAuth credentials.
-                credential = await AuthenticationManager.Current.GenerateCredentialAsync(info.ServiceUri);
-            }
-            catch (TaskCanceledException)
-            {
-                return credential;
-            }
-            catch (Exception)
-            {
-                // Exception will be reported in calling function.
-                throw;
-            }
-
-            return credential;
-        }
-
-        #region IOAuthAuthorizationHandler implementation
-
-        // Use a TaskCompletionSource to track the completion of the authorization.
-        private TaskCompletionSource<IDictionary<string, string>> _taskCompletionSource;
-
-        // IOAuthAuthorizeHandler.AuthorizeAsync implementation.
-        public Task<IDictionary<string, string>> AuthorizeAsync(Uri serviceUri, Uri authorizeUri, Uri callbackUri)
-        {
-            // If the TaskCompletionSource is not null, authorization may already be in progress and should be canceled.
-            // Try to cancel any existing authentication task.
-            _taskCompletionSource?.TrySetCanceled();
-
-            // Create a task completion source.
-            _taskCompletionSource = new TaskCompletionSource<IDictionary<string, string>>();
-
-            // Get the current Android Activity.
-            Activity activity = this;
-
-            // Create a new Xamarin.Auth.OAuth2Authenticator using the information passed in.
-            OAuth2Authenticator authenticator = new OAuth2Authenticator(
-                clientId: AppClientId,
-                scope: "",
-                authorizeUrl: authorizeUri,
-                redirectUrl: callbackUri)
-            {
-                ShowErrors = false,
-                // Allow the user to cancel the OAuth attempt.
-                AllowCancel = true
-            };
-
-            // Define a handler for the OAuth2Authenticator.Completed event.
-            authenticator.Completed += (sender, authArgs) =>
-            {
-                try
-                {
-                    // Check if the user is authenticated.
-                    if (authArgs.IsAuthenticated)
-                    {
-                        // If authorization was successful, get the user's account.
-                        Xamarin.Auth.Account authenticatedAccount = authArgs.Account;
-
-                        // Set the result (Credential) for the TaskCompletionSource.
-                        _taskCompletionSource.SetResult(authenticatedAccount.Properties);
-                    }
-                    else
-                    {
-                        throw new Exception("Unable to authenticate user.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // If authentication failed, set the exception on the TaskCompletionSource.
-                    _taskCompletionSource.TrySetException(ex);
-
-                    // Cancel authentication.
-                    authenticator.OnCancelled();
-                }
-                finally
-                {
-                    // Dismiss the OAuth login.
-                    activity.FinishActivity(99);
-                }
-            };
-
-            // If an error was encountered when authenticating, set the exception on the TaskCompletionSource.
-            authenticator.Error += (sndr, errArgs) =>
-            {
-                // If the user cancels, the Error event is raised but there is no exception ... best to check first.
-                if (errArgs.Exception != null)
-                {
-                    _taskCompletionSource.TrySetException(errArgs.Exception);
-                }
-                else
-                {
-                    // Login canceled: dismiss the OAuth login.
-                    if (_taskCompletionSource != null)
-                    {
-                        _taskCompletionSource.TrySetCanceled();
-                        activity.FinishActivity(99);
-                    }
-                }
-
-                // Cancel authentication.
-                authenticator.OnCancelled();
-            };
-
-            // Present the OAuth UI so the user can enter user name and password.
-            Android.Content.Intent intent = authenticator.GetUI(activity);
-            activity.StartActivityForResult(intent, 99);
-
-            // Return completion source task so the caller can await completion.
-            return _taskCompletionSource.Task;
-        }
-
-        #endregion
-
-        #endregion
     }
 }

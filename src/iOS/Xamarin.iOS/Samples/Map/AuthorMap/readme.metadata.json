@@ -33,6 +33,7 @@
         "Portal"
     ],
     "snippets": [
+        "../../../Helpers/ArcGISLoginPrompt.cs",
         "AuthorMap.cs"
     ],
     "title": "Create and save map"

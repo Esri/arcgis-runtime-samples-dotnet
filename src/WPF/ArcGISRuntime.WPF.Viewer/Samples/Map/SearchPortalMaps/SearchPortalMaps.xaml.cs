@@ -1,24 +1,21 @@
-// Copyright 2017 Esri.
+// Copyright 2021 Esri.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an 
-// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific 
+// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
 // language governing permissions and limitations under the License.
 
+using ArcGISRuntime.Helpers;
+using Esri.ArcGISRuntime;
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.Portal;
-using Esri.ArcGISRuntime.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Navigation;
-using System.Windows.Threading;
-using Esri.ArcGISRuntime;
 
 namespace ArcGISRuntime.WPF.Samples.SearchPortalMaps
 {
@@ -28,39 +25,30 @@ namespace ArcGISRuntime.WPF.Samples.SearchPortalMaps
         description: "Find webmap portal items by using a search term.",
         instructions: "Enter search terms into the search bar. Once the search is complete, a list is populated with the resultant webmaps. Tap on a webmap to set it to the map view. Scrolling to the bottom of the webmap recycler view will get more results.",
         tags: new[] { "keyword", "query", "search", "webmap" })]
+    [ArcGISRuntime.Samples.Shared.Attributes.ClassFile("Helpers\\ArcGISLoginPrompt.cs")]
     public partial class SearchPortalMaps
     {
-        // Variables for OAuth with default values ...
-        // URL of the server to authenticate with (ArcGIS Online)
         private const string ArcGISOnlineUrl = "https://www.arcgis.com/sharing/rest";
-
-        // Client ID for the app registered with the server (Portal Maps)
-        private string _appClientId = "2Gh53JRzkPtOENQq";
-
-        // Redirect URL after a successful authorization (configured for the Portal Maps application)
-        private string _oAuthRedirectUrl = "https://developers.arcgis.com";
 
         // Constructor for sample class
         public SearchPortalMaps()
         {
             InitializeComponent();
 
-            // Show the OAuth settings in the page
-            ClientIdTextBox.Text = _appClientId;
-            RedirectUrlTextBox.Text = _oAuthRedirectUrl;
+            _ = Initialize();
+        }
+
+        private async Task Initialize()
+        {
+            ArcGISLoginPrompt.SetChallengeHandler();
+
+            bool loggedIn = await ArcGISLoginPrompt.EnsureAGOLCredentialAsync();
 
             // Display a default map
-            DisplayDefaultMap();
+            if (loggedIn) DisplayDefaultMap();
         }
 
-        private void DisplayDefaultMap()
-        {
-            // Create a new Map instance
-            Map myMap = new Map(BasemapStyle.ArcGISLightGray);
-
-            // Provide Map to the MapView
-            MyMapView.Map = myMap;
-        }
+        private void DisplayDefaultMap() => MyMapView.Map = new Map(BasemapStyle.ArcGISLightGray);
 
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
@@ -78,20 +66,20 @@ namespace ArcGISRuntime.WPF.Samples.SearchPortalMaps
 
                     // Create a query expression that will get public items of type 'web map' with the keyword(s) in the items tags
                     string queryExpression = string.Format("tags:\"{0}\" access:public type: (\"web map\" NOT \"web mapping application\")", SearchText.Text);
-                
+
                     // Create a query parameters object with the expression and a limit of 10 results
                     PortalQueryParameters queryParams = new PortalQueryParameters(queryExpression, 10);
 
                     // Search the portal using the query parameters and await the results
                     PortalQueryResultSet<PortalItem> findResult = await portal.FindItemsAsync(queryParams);
-                
+
                     // Get the items from the query results
                     mapItems = findResult.Results;
                 }
                 else
                 {
-                    // Call a sub that will force the user to log in to ArcGIS Online (if they haven't already)
-                    bool loggedIn = await EnsureLoggedInAsync();
+                    // Call a sub that will force the user to log in to ArcGIS Online (if they haven't already).
+                    bool loggedIn = await ArcGISLoginPrompt.EnsureAGOLCredentialAsync();
                     if (!loggedIn) { return; }
 
                     // Connect to the portal (will connect using the provided credentials)
@@ -131,7 +119,7 @@ namespace ArcGISRuntime.WPF.Samples.SearchPortalMaps
 
             // Handle change in the load status (to report load errors)
             webMap.LoadStatusChanged += WebMapLoadStatusChanged;
-            
+
             // Show the web map in the map view
             MyMapView.Map = webMap;
         }
@@ -139,309 +127,15 @@ namespace ArcGISRuntime.WPF.Samples.SearchPortalMaps
         private void WebMapLoadStatusChanged(object sender, Esri.ArcGISRuntime.LoadStatusEventArgs e)
         {
             // Report errors if map failed to load
-            if(e.Status == LoadStatus.FailedToLoad)
+            if (e.Status == LoadStatus.FailedToLoad)
             {
                 Map map = (Map)sender;
                 Exception err = map.LoadError;
-                if(err != null)
+                if (err != null)
                 {
                     MessageBox.Show(err.Message, "Map Load Error");
                 }
             }
         }
-
-        private void RadioButtonUnchecked(object sender, RoutedEventArgs e)
-        {
-            // When the search/user radio buttons are unchecked, clear the list box
-            MapListBox.ItemsSource = null;
-
-            // Set the map to the default (if necessary)
-            if (MyMapView.Map.Item != null)
-            {
-                DisplayDefaultMap();
-            }
-        }
-
-        private async Task<bool> EnsureLoggedInAsync()
-        {
-            bool loggedIn = false;
-
-            try
-            {
-                // Create a challenge request for portal credentials (OAuth credential request for arcgis.com)
-                CredentialRequestInfo challengeRequest = new CredentialRequestInfo
-                {
-
-                    // Use the OAuth implicit grant flow
-                    GenerateTokenOptions = new GenerateTokenOptions
-                    {
-                        TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit
-                    },
-
-                    // Indicate the url (portal) to authenticate with (ArcGIS Online)
-                    ServiceUri = new Uri(ArcGISOnlineUrl)
-                };
-
-                // Call GetCredentialAsync on the AuthenticationManager to invoke the challenge handler
-                Credential cred = await AuthenticationManager.Current.GetCredentialAsync(challengeRequest, false);
-                loggedIn = cred != null;
-            }
-            catch (OperationCanceledException)
-            {
-                // OAuth login was canceled
-                // .. ignore this, the user can still search public maps
-            }
-            catch (Exception ex)
-            {
-                // Login failure
-                MessageBox.Show("Login failed: " + ex.Message);
-            }
-
-            return loggedIn;
-        }
-
-        private void UpdateAuthenticationManager()
-        {
-            // Define the server information for ArcGIS Online
-            ServerInfo portalServerInfo = new ServerInfo(new Uri(ArcGISOnlineUrl))
-            {
-                TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit,
-                OAuthClientInfo = new OAuthClientInfo(_appClientId, new Uri(_oAuthRedirectUrl))
-            };
-
-            // Get a reference to the (singleton) AuthenticationManager for the app
-            AuthenticationManager thisAuthenticationManager = AuthenticationManager.Current;
-
-            // Register the ArcGIS Online server information with the AuthenticationManager
-            thisAuthenticationManager.RegisterServer(portalServerInfo);
-
-            // Use the OAuthAuthorize class in this project to create a new web view to show the login UI
-            thisAuthenticationManager.OAuthAuthorizeHandler = new OAuthAuthorize();
-
-            // Create a new ChallengeHandler that uses a method in this class to challenge for credentials
-            thisAuthenticationManager.ChallengeHandler = new ChallengeHandler(CreateCredentialAsync);
-        }
-
-        // ChallengeHandler function that will be called whenever access to a secured resource is attempted
-        public async Task<Credential> CreateCredentialAsync(CredentialRequestInfo info)
-        {
-            Credential credential = null;
-
-            try
-            {
-                // IOAuthAuthorizeHandler will challenge the user for OAuth credentials
-                credential = await AuthenticationManager.Current.GenerateCredentialAsync(info.ServiceUri);
-            }
-            catch (Exception)
-            {
-                // Exception will be reported in calling function
-                throw;
-            }
-
-            return credential;
-        }
-
-        private void SaveOAuthSettingsClicked(object sender, RoutedEventArgs e)
-        {
-            // Settings were provided, update the configuration settings for OAuth authorization
-            _appClientId = ClientIdTextBox.Text.Trim();
-            _oAuthRedirectUrl = RedirectUrlTextBox.Text.Trim();
-
-            // Update authentication manager with the OAuth settings
-            UpdateAuthenticationManager();
-
-            // Hide the OAuth input, show the search UI
-            OAuthSettingsGrid.Visibility = Visibility.Collapsed;
-            SearchUI.Visibility = Visibility.Visible;
-        }
-
-        private void CancelOAuthSettingsClicked(object sender, RoutedEventArgs e)
-        {
-            // Warn that browsing user's ArcGIS Online maps won't be available without OAuth settings
-            string warning = "Without OAuth settings, you will not be able to browse maps from your ArcGIS Online account.";
-            bool noAuth = MessageBox.Show(warning, "No OAuth Settings", MessageBoxButton.OKCancel) == MessageBoxResult.OK;
-
-            if (noAuth)
-            {
-                // Disable browsing maps from your ArcGIS Online account
-                BrowseMyMaps.IsEnabled = false;
-
-                // Hide the OAuth input, show the search UI
-                OAuthSettingsGrid.Visibility = Visibility.Collapsed;
-                SearchUI.Visibility = Visibility.Visible;
-            }
-        }
     }
-
-    #region OAuth handler
-    public class OAuthAuthorize : IOAuthAuthorizeHandler
-    {
-        // Window to contain the OAuth UI
-        private Window _window;
-
-        // Use a TaskCompletionSource to track the completion of the authorization
-        private TaskCompletionSource<IDictionary<string, string>> _tcs;
-
-        // URL for the authorization callback result (the redirect URI configured for your application)
-        private string _callbackUrl;
-
-        // URL that handles the OAuth request
-        private string _authorizeUrl;
-
-        // Function to handle authorization requests, takes the URIs for the secured service, the authorization endpoint, and the redirect URI
-        public Task<IDictionary<string, string>> AuthorizeAsync(Uri serviceUri, Uri authorizeUri, Uri callbackUri)
-        {
-            if (_tcs != null && !_tcs.Task.IsCompleted)
-                throw new Exception("Task in progress");
-
-            _tcs = new TaskCompletionSource<IDictionary<string, string>>();
-
-            // Store the authorization and redirect URLs
-            _authorizeUrl = authorizeUri.AbsoluteUri;
-            _callbackUrl = callbackUri.AbsoluteUri;
-
-            // Call a function to show the login controls, make sure it runs on the UI thread for this app
-            Dispatcher dispatcher = Application.Current.Dispatcher;
-            if (dispatcher == null || dispatcher.CheckAccess())
-            {
-                AuthorizeOnUIThread(_authorizeUrl);
-            }
-            else
-            {
-                Action authorizeOnUIAction = () => AuthorizeOnUIThread(_authorizeUrl);
-                dispatcher.BeginInvoke(authorizeOnUIAction);
-            }
-
-            // Return the task associated with the TaskCompletionSource
-            return _tcs.Task;
-        }
-
-        // Challenge for OAuth credentials on the UI thread
-        private void AuthorizeOnUIThread(string authorizeUri)
-        {
-            // Create a WebBrowser control to display the authorize page
-            WebBrowser webBrowser = new WebBrowser();
-
-            // Handle the navigation event for the browser to check for a response to the redirect URL
-            webBrowser.Navigating += WebBrowserOnNavigating;
-
-            // Display the web browser in a new window 
-            _window = new Window
-            {
-                Content = webBrowser,
-                Height = 330,
-                Width = 295,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-
-            // Set the app's window as the owner of the browser window (if main window closes, so will the browser)
-            if (Application.Current != null && Application.Current.MainWindow != null)
-            {
-                _window.Owner = Application.Current.MainWindow;
-            }
-
-            // Handle the window closed event then navigate to the authorize url
-            _window.Closed += OnWindowClosed;
-            webBrowser.Navigate(authorizeUri);
-
-            // Display the Window
-            _window.ShowDialog();
-        }
-
-        // Handle the browser window closing
-        private void OnWindowClosed(object sender, EventArgs e)
-        {
-            // If the browser window closes, return the focus to the main window
-            if (_window != null && _window.Owner != null)
-            {
-                _window.Owner.Focus();
-            }
-
-            // If the task wasn't completed, the user must have closed the window without logging in
-            if (!_tcs.Task.IsCompleted)
-            {
-                // Set the task completion source exception to indicate a canceled operation
-                _tcs.SetCanceled();
-            }
-
-            _window = null;
-        }
-
-        // Handle browser navigation (content changing)
-        private void WebBrowserOnNavigating(object sender, NavigatingCancelEventArgs e)
-        {
-            // Check for a response to the callback url
-            const string portalApprovalMarker = "/oauth2/approval";
-            WebBrowser webBrowser = sender as WebBrowser;
-
-            Uri uri = e.Uri;
-
-            // If no browser, uri, or an empty url, return
-            if (webBrowser == null || uri == null || String.IsNullOrEmpty(uri.AbsoluteUri))
-                return;
-
-            // Check for redirect
-            bool isRedirected = uri.AbsoluteUri.StartsWith(_callbackUrl) ||
-                _callbackUrl.Contains(portalApprovalMarker) && uri.AbsoluteUri.Contains(portalApprovalMarker);
-
-            if (isRedirected)
-            {
-                // Browser was redirected to the callbackUrl (success!)
-                //    -close the window 
-                //    -decode the parameters (returned as fragments or query)
-                //    -return these parameters as result of the Task
-                e.Cancel = true;
-
-                // Call a helper function to decode the response parameters
-                IDictionary<string,string> authResponse = DecodeParameters(uri);
-
-                // Set the result for the task completion source
-                _tcs.SetResult(authResponse);
-
-                if (_window != null)
-                {
-                    _window.Close();
-                }
-            }
-        }
-
-        private static IDictionary<string, string> DecodeParameters(Uri uri)
-        {
-            // Create a dictionary of key value pairs returned in an OAuth authorization response URI query string
-            string answer = "";
-
-            // Get the values from the URI fragment or query string
-            if (!String.IsNullOrEmpty(uri.Fragment))
-            {
-                answer = uri.Fragment.Substring(1);
-            }
-            else
-            {
-                if (!String.IsNullOrEmpty(uri.Query))
-                {
-                    answer = uri.Query.Substring(1);
-                }
-            }
-
-            // Parse parameters into key / value pairs
-            Dictionary<string,string> keyValueDictionary = new Dictionary<string, string>();
-            string[] keysAndValues = answer.Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string kvString in keysAndValues)
-            {
-                string[] pair = kvString.Split('=');
-                string key = pair[0];
-                string value = string.Empty;
-                if (key.Length > 1)
-                {
-                    value = Uri.UnescapeDataString(pair[1]);
-                }
-
-                keyValueDictionary.Add(key, value);
-            }
-
-            // Return the dictionary of string keys/values
-            return keyValueDictionary;
-        }
-    }
-    #endregion
 }

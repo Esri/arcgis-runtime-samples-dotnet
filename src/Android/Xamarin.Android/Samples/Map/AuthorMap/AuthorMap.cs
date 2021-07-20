@@ -8,14 +8,13 @@
 // language governing permissions and limitations under the License.
 
 using Android.App;
-using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using ArcGISRuntime.Helpers;
 using ArcGISRuntime.Samples.Shared.Managers;
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.Portal;
-using Esri.ArcGISRuntime.Security;
 using Esri.ArcGISRuntime.UI;
 using Esri.ArcGISRuntime.UI.Controls;
 using System;
@@ -23,7 +22,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Xamarin.Auth;
 using ContextThemeWrapper = AndroidX.AppCompat.View.ContextThemeWrapper;
 
 namespace ArcGISRuntime.Samples.AuthorMap
@@ -35,7 +33,8 @@ namespace ArcGISRuntime.Samples.AuthorMap
         description: "Create and save a map as an ArcGIS `PortalItem` (i.e. web map).",
         instructions: "1. Select the basemap and layers you'd like to add to your map.",
         tags: new[] { "ArcGIS Online", "OAuth", "portal", "publish", "share", "web map" })]
-    public class AuthorMap : Activity, IOAuthAuthorizeHandler
+    [ArcGISRuntime.Samples.Shared.Attributes.ClassFile("Helpers\\ArcGISLoginPrompt.cs")]
+    public class AuthorMap : Activity
     {
         // Hold a reference to the map view
         private MapView _myMapView;
@@ -43,20 +42,14 @@ namespace ArcGISRuntime.Samples.AuthorMap
         // Progress bar to show when the app is working
         private ProgressBar _progressBar;
 
-        // Use a TaskCompletionSource to track the completion of the authorization
-        private TaskCompletionSource<IDictionary<string, string>> _taskCompletionSource;
-
-        // Store the OAuth dialog and controls for updating OAuth configuration
-        private AlertDialog _configOAuthDialog = null;
-        private EditText _clientIdText;
-        private EditText _redirectUrlText;
-
         // String array to store basemap constructor types
-        private string[] _basemapTypes = {
+        private readonly string[] _basemapNames =
+        {
+            "Light Gray",
             "Topographic",
             "Streets",
             "Imagery",
-            "Oceans"
+            "Ocean"
         };
 
         // Dictionary of operational layer names and URLs
@@ -67,17 +60,6 @@ namespace ArcGISRuntime.Samples.AuthorMap
             {"US Census Data", "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer"}
         };
 
-        // Variables for OAuth-related values ...
-        // URL of the server to authenticate with
-        private string _serverUrl = "https://www.arcgis.com/sharing/rest";
-
-        // TODO: Add Client ID for an app registered with the server
-        private string _appClientId = "lgAdHkYZYlwwfAhC";
-
-        // TODO: Add URL for redirecting after a successful authorization
-        //       Note - this must be a URL configured as a valid Redirect URI with your app
-        private string _oAuthRedirectUrl = "my-ags-app://auth";
-
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
@@ -87,23 +69,24 @@ namespace ArcGISRuntime.Samples.AuthorMap
             // Create the UI, setup the control references and execute initialization
             CreateLayout();
 
-            // Set up AuthenticationManager (prompt user for OAuth config first)
-            ShowOAuthConfigDialog();
-            // Note: the code above calls UpdateAuthenticationManager()
-
-            Initialize();
+            _ = Initialize();
         }
 
-        private void Initialize()
+        private async Task Initialize()
         {
             // Remove API key.
             ApiKeyManager.DisableKey();
 
-            // Create new Map with basemap
-            Map myMap = new Map(Basemap.CreateLightGrayCanvas());
+            ArcGISLoginPrompt.SetChallengeHandler();
 
-            // Provide used Map to the MapView
-            _myMapView.Map = myMap;
+            bool loggedIn = await ArcGISLoginPrompt.EnsureAGOLCredentialAsync(this);
+
+            // Show a plain gray map in the map view
+            if (loggedIn)
+            {
+                _myMapView.Map = new Map(BasemapStyle.ArcGISLightGray);
+            }
+            else _myMapView.Map = new Map();
         }
 
         protected override void OnDestroy()
@@ -260,32 +243,7 @@ namespace ArcGISRuntime.Samples.AuthorMap
 
         private async Task SaveNewMapAsync(Map myMap, string title, string description, string[] tags, RuntimeImage img)
         {
-            // Challenge the user for portal credentials (OAuth credential request for arcgis.com)
-            CredentialRequestInfo loginInfo = new CredentialRequestInfo
-            {
-                // Use the OAuth implicit grant flow
-                GenerateTokenOptions = new GenerateTokenOptions
-                {
-                    TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit
-                },
-
-                // Indicate the url (portal) to authenticate with (ArcGIS Online)
-                ServiceUri = new Uri("https://www.arcgis.com/sharing/rest")
-            };
-
-            try
-            {
-                // Get a reference to the (singleton) AuthenticationManager for the app
-                AuthenticationManager thisAuthenticationManager = AuthenticationManager.Current;
-
-                // Call GetCredentialAsync on the AuthenticationManager to invoke the challenge handler
-                await thisAuthenticationManager.GetCredentialAsync(loginInfo, false);
-            }
-            catch (System.OperationCanceledException)
-            {
-                // user canceled the login
-                throw new Exception("Portal log in was canceled.");
-            }
+            await ArcGISLoginPrompt.EnsureAGOLCredentialAsync(this);
 
             // Get the ArcGIS Online portal (will use credential from login above)
             ArcGISPortal agsOnline = await ArcGISPortal.CreateAsync();
@@ -305,7 +263,7 @@ namespace ArcGISRuntime.Samples.AuthorMap
             mapsMenu.MenuItemClick += OnBasemapsMenuItemClicked;
 
             // Create a menu option for each basemap type
-            foreach (string basemapType in _basemapTypes)
+            foreach (string basemapType in _basemapNames)
             {
                 mapsMenu.Menu.Add(basemapType);
             }
@@ -314,32 +272,31 @@ namespace ArcGISRuntime.Samples.AuthorMap
             mapsMenu.Show();
         }
 
-        private void OnBasemapsMenuItemClicked(object sender, PopupMenu.MenuItemClickEventArgs e)
-        {
-            // Get the title of the selected item
-            string selectedBasemapType = e.Item.TitleCondensedFormatted.ToString();
+        private void OnBasemapsMenuItemClicked(object sender, PopupMenu.MenuItemClickEventArgs e) => ApplyBasemap(e.Item.TitleCondensedFormatted.ToString());
 
-            // Apply the chosen basemap
-            switch (selectedBasemapType)
+        private void ApplyBasemap(string basemapName)
+        {
+            // Set the basemap for the map according to the user's choice in the list box.
+            switch (basemapName)
             {
+                case "Light Gray":
+                    _myMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISLightGray);
+                    break;
+
                 case "Topographic":
-                    // Set the basemap to Topographic
-                    _myMapView.Map.Basemap = Basemap.CreateTopographic();
+                    _myMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISTopographic);
                     break;
 
                 case "Streets":
-                    // Set the basemap to Streets
-                    _myMapView.Map.Basemap = Basemap.CreateStreets();
+                    _myMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISStreets);
                     break;
 
                 case "Imagery":
-                    // Set the basemap to Imagery
-                    _myMapView.Map.Basemap = Basemap.CreateImagery();
+                    _myMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISImagery);
                     break;
 
-                case "Oceans":
-                    // Set the basemap to Oceans
-                    _myMapView.Map.Basemap = Basemap.CreateOceans();
+                case "Ocean":
+                    _myMapView.Map.Basemap = new Basemap(BasemapStyle.ArcGISOceans);
                     break;
             }
         }
@@ -398,275 +355,6 @@ namespace ArcGISRuntime.Samples.AuthorMap
         }
 
         #endregion Layers Button
-
-        #region OAuth helpers
-
-        // Prompt for portal item information
-        private void ShowOAuthConfigDialog()
-        {
-            // Create a dialog to get OAuth information (client id, redirect url, etc.)
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-
-            // Create the layout
-            LinearLayout dialogLayout = new LinearLayout(this)
-            {
-                Orientation = Orientation.Vertical
-            };
-
-            // Create a text box for entering the client id
-            LinearLayout clientIdLayout = new LinearLayout(this)
-            {
-                Orientation = Orientation.Horizontal
-            };
-            TextView clientIdLabel = new TextView(this)
-            {
-                Text = "Client ID:"
-            };
-            _clientIdText = new EditText(this);
-            if (!String.IsNullOrEmpty(_appClientId)) { _clientIdText.Text = _appClientId; }
-            clientIdLayout.AddView(clientIdLabel);
-            clientIdLayout.AddView(_clientIdText);
-
-            // Create a text box for entering the redirect url
-            LinearLayout redirectUrlLayout = new LinearLayout(this)
-            {
-                Orientation = Orientation.Horizontal
-            };
-
-            TextView redirectUrlLabel = new TextView(this)
-            {
-                Text = "Redirect:"
-            };
-
-            _redirectUrlText = new EditText(this)
-            {
-                Hint = "https://my.redirect/url"
-            };
-
-            if (!String.IsNullOrEmpty(_oAuthRedirectUrl))
-            {
-                _redirectUrlText.Text = _oAuthRedirectUrl;
-            }
-            redirectUrlLayout.AddView(redirectUrlLabel);
-            redirectUrlLayout.AddView(_redirectUrlText);
-
-            // Create a button to dismiss the dialog (and proceed with updating the values)
-            Button okButton = new Button(this)
-            {
-                Text = "Save"
-            };
-
-            // Handle the click event for the OK button
-            okButton.Click += OnCloseOAuthDialog;
-
-            // Add the controls to the dialog
-            dialogLayout.AddView(clientIdLayout);
-            dialogLayout.AddView(redirectUrlLayout);
-            dialogLayout.AddView(okButton);
-            dialogBuilder.SetView(dialogLayout);
-            dialogBuilder.SetTitle("Configure OAuth");
-
-            // Show the dialog
-            _configOAuthDialog = dialogBuilder.Show();
-        }
-
-        // Click event for the OK button on the save map dialog
-        private void OnCloseOAuthDialog(object sender, EventArgs e)
-        {
-            if (_configOAuthDialog != null)
-            {
-                // Get title and description text
-                _appClientId = _clientIdText.Text;
-                _oAuthRedirectUrl = _redirectUrlText.Text;
-
-                // Dismiss the dialog
-                _configOAuthDialog.Dismiss();
-
-                // Update the OAuth settings
-                UpdateAuthenticationManager();
-            }
-        }
-
-        private void UpdateAuthenticationManager()
-        {
-            // Register the server information with the AuthenticationManager
-            ServerInfo portalServerInfo = new ServerInfo(new Uri(_serverUrl))
-            {
-                OAuthClientInfo = new OAuthClientInfo(_appClientId, new Uri(_oAuthRedirectUrl)),
-
-                // Specify OAuthAuthorizationCode if you need a refresh token (and have specified a valid client secret)
-                // Otherwise, use OAuthImplicit
-                TokenAuthenticationType = TokenAuthenticationType.OAuthImplicit
-            };
-
-            // Get a reference to the (singleton) AuthenticationManager for the app
-            AuthenticationManager thisAuthenticationManager = AuthenticationManager.Current;
-
-            // Register the server information
-            thisAuthenticationManager.RegisterServer(portalServerInfo);
-
-            // Assign the method that AuthenticationManager will call to challenge for secured resources
-            thisAuthenticationManager.ChallengeHandler = new ChallengeHandler(CreateCredentialAsync);
-
-            // Set the OAuth authorization handler to this class (Implements IOAuthAuthorize interface)
-            thisAuthenticationManager.OAuthAuthorizeHandler = this;
-        }
-
-        // ChallengeHandler function for AuthenticationManager, called whenever access to a secured resource is attempted
-        private async Task<Credential> CreateCredentialAsync(CredentialRequestInfo info)
-        {
-            OAuthTokenCredential credential = null;
-
-            try
-            {
-                // Create generate token options if necessary
-                if (info.GenerateTokenOptions == null)
-                {
-                    info.GenerateTokenOptions = new GenerateTokenOptions();
-                }
-
-                // AuthenticationManager will handle challenging the user for credentials
-                credential = await AuthenticationManager.Current.GenerateCredentialAsync
-                    (
-                            info.ServiceUri,
-                            info.GenerateTokenOptions
-                    ) as OAuthTokenCredential;
-            }
-            catch (TaskCanceledException) { return credential; }
-            catch (Exception)
-            {
-                // Exception will be reported in calling function
-                throw;
-            }
-
-            return credential;
-        }
-
-        // IOAuthAuthorizeHandler.AuthorizeAsync implementation
-        public Task<IDictionary<string, string>> AuthorizeAsync(Uri serviceUri, Uri authorizeUri, Uri callbackUri)
-        {
-            // If the TaskCompletionSource is not null, authorization may already be in progress and should be cancelled
-            if (_taskCompletionSource != null)
-            {
-                // Try to cancel any existing authentication task
-                _taskCompletionSource.TrySetCanceled();
-            }
-
-            // Create a task completion source
-            _taskCompletionSource = new TaskCompletionSource<IDictionary<string, string>>();
-
-            // Create a new Xamarin.Auth.OAuth2Authenticator using the information passed in
-            Xamarin.Auth.OAuth2Authenticator authenticator = new OAuth2Authenticator(
-                clientId: _appClientId,
-                scope: "",
-                authorizeUrl: authorizeUri,
-                redirectUrl: callbackUri)
-            {
-                ShowErrors = false
-            };
-
-            // Allow the user to cancel the OAuth attempt
-            authenticator.AllowCancel = true;
-
-            // Define a handler for the OAuth2Authenticator.Completed event
-            authenticator.Completed += (sender, authArgs) =>
-            {
-                try
-                {
-                    // Check if the user is authenticated
-                    if (authArgs.IsAuthenticated)
-                    {
-                        // If authorization was successful, get the user's account
-                        Xamarin.Auth.Account authenticatedAccount = authArgs.Account;
-
-                        // Set the result (Credential) for the TaskCompletionSource
-                        _taskCompletionSource.SetResult(authenticatedAccount.Properties);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // If authentication failed, set the exception on the TaskCompletionSource
-                    _taskCompletionSource.TrySetException(ex);
-
-                    // Cancel authentication
-                    authenticator.OnCancelled();
-                }
-                finally
-                {
-                    // End the OAuth login activity
-                    FinishActivity(99);
-                }
-            };
-
-            // If an error was encountered when authenticating, set the exception on the TaskCompletionSource
-            authenticator.Error += (sndr, errArgs) =>
-            {
-                // If the user cancels, the Error event is raised but there is no exception ... best to check first
-                if (errArgs.Exception != null)
-                {
-                    _taskCompletionSource.TrySetException(errArgs.Exception);
-                }
-                else
-                {
-                    // Login canceled: end the OAuth login activity
-                    if (_taskCompletionSource != null)
-                    {
-                        _taskCompletionSource.TrySetCanceled();
-                        FinishActivity(99);
-                    }
-                }
-
-                // Cancel authentication
-                authenticator.OnCancelled();
-            };
-
-            // Present the OAuth UI (Activity) so the user can enter user name and password
-            Intent intent = authenticator.GetUI(this);
-            StartActivityForResult(intent, 99);
-
-            // Return completion source task so the caller can await completion
-            return _taskCompletionSource.Task;
-        }
-
-        private static IDictionary<string, string> DecodeParameters(Uri uri)
-        {
-            // Create a dictionary of key value pairs returned in an OAuth authorization response URI query string
-            string answer = "";
-
-            // Get the values from the URI fragment or query string
-            if (!String.IsNullOrEmpty(uri.Fragment))
-            {
-                answer = uri.Fragment.Substring(1);
-            }
-            else
-            {
-                if (!String.IsNullOrEmpty(uri.Query))
-                {
-                    answer = uri.Query.Substring(1);
-                }
-            }
-
-            // Parse parameters into key / value pairs
-            Dictionary<string, string> keyValueDictionary = new Dictionary<string, string>();
-            string[] keysAndValues = answer.Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string kvString in keysAndValues)
-            {
-                string[] pair = kvString.Split('=');
-                string key = pair[0];
-                string value = string.Empty;
-                if (key.Length > 1)
-                {
-                    value = Uri.UnescapeDataString(pair[1]);
-                }
-
-                keyValueDictionary.Add(key, value);
-            }
-
-            // Return the dictionary of string keys/values
-            return keyValueDictionary;
-        }
-
-        #endregion OAuth helpers
     }
 
     // A custom DialogFragment class to show input controls for saving a web map
